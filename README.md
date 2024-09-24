@@ -6,7 +6,7 @@ Docente: Ângelo Amâncio Duarte </h3>
 
 <div align="justify"> 
 <h2> Resumo </h2>
-O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizandoa linguagem de programação C, e a placa FPGA DE1-SoC para interação com o usuário, sendo que é utilizado o acelerômetro da placa para obter os movimentos desejados pelo usuário para as peças, assim como os botões da placa para permitir que o jogador interaja com o menu, pause o jogo, e gire as peças. Além disso, é utilizada sua saída VGA para apresentar a interface gráfica do jogo no monitor com a resolução de 320x240.
+O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a linguagem de programação C, e a placa FPGA DE1-SoC para interação com o usuário, sendo que é utilizado o acelerômetro da placa para obter os movimentos desejados pelo usuário para as peças, assim como os botões da placa para permitir que o jogador interaja com o menu, pause o jogo, e gire as peças. Além disso, é utilizada sua saída VGA para apresentar a interface gráfica do jogo no monitor com a resolução de 320x240.
 </div>
 <h2>Funcionamento do Jogo</h2>
     <p>O <strong>Tetris</strong> é um jogo em que o jogador organiza peças de formatos variados que caem de forma contínua na tela. O objetivo é movimentar e rotacionar essas peças para formar linhas horizontais completas, que são removidas, concedendo pontos ao jogador. O jogo termina quando as peças se acumulam e alcançam o topo da área de jogo.</p>
