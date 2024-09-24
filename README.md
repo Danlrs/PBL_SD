@@ -26,7 +26,7 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a
 </ul>
 <h3>3. Exibição Gráfica - Saída VGA</h3>
 <p>A interface gráfica do jogo é exibida através da <strong>saída VGA</strong>, permitindo que o jogo seja visualizado em um monitor externo. O monitor utiliza uma resolução de <strong>320x240</strong>, o que oferece uma experiência visual simples e eficiente para o Tetris. A área de jogo é clara e visível, com cores distintas entre as peças que estão caindo, e as que já estão posicionadas, e um layout de fácil compreensão.</p>
-<h2>Fluxo do Jogo</h2>
+<h2>Dinâmica do Jogo</h2>
 <ol>
 <li><strong>Inicialização</strong>: Ao iniciar o jogo, o menu principal será exibido, apresentando o nome "Tetris", as opções de iniciar e sair, assim como as três melhores pontuações.</li>
 <li><strong>Jogabilidade</strong>: Durante o jogo, o jogador controla a posição das peças inclinando a placa, e pode rotacioná-las ou pausar o jogo utilizando os botões.</li>
