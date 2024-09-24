@@ -15,7 +15,7 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizandoa 
 <p>Neste projeto, foram integrados vários periféricos da DE1-SoC para a interação com o jogo, conforme detalhado abaixo:</p>
 
 <h3>1. Movimento das Peças - Acelerômetro</h3>
-<p>O <strong>acelerômetro</strong> da DE1-SoC é utilizado para capturar os movimentos das peças no eixo horizontal (esquerda e direita). Ao inclinar a placa levemente para a esquerda ou direita, as peças se movem de forma correspondente dentro da área de jogo. Este método de controle adiciona uma interatividade física ao jogo, tornando a experiência mais dinâmica e intuitiva.</p>
+<p>O <strong>acelerômetro</strong> da DE1-SoC é utilizado para capturar os movimentos das peças no eixo horizontal (esquerda e direita) asssim como no eixo vertical, para acelerar a queda da peça. Ao inclinar a placa levemente para a esquerda, direita, ou para baixo, as peças se movem de forma correspondente dentro da área de jogo. Este método de controle adiciona uma interatividade física ao jogo, tornando a experiência mais dinâmica e intuitiva.</p>
 
 <h3>2. Controle de Rotação e Interações com o Menu - Botões</h3>
 <p><strong>Botões</strong> da placa são utilizados para outras funcionalidades, como:</p>
