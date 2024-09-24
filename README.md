@@ -30,5 +30,6 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a
 <ol>
 <li><strong>Inicialização</strong>: Ao iniciar o jogo, o menu principal será exibido, apresentando o nome "Tetris", as opções de iniciar e sair, assim como as três melhores pontuações.</li>
 <li><strong>Jogabilidade</strong>: Durante o jogo, o jogador controla a posição das peças inclinando a placa, e pode rotacioná-las ou pausar o jogo utilizando os botões.</li>
-<li><strong>Condições de Vitória/Derrota</strong>: O jogo continua indefinidamente enquanto o jogador for capaz de formar linhas completas sem que as peças atinjam o topo da tela. Se sua pontuação se for superior a alguma das três melhores, ela fica armazenada no ranking enquanto jogo estiver em execução.</li>
+<li><strong>Condições de Vitória/Derrota</strong>: O jogo continua indefinidamente enquanto o jogador for capaz de formar linhas completas sem que as peças atinjam o topo da tela. </li>
+<li><strong>Pontuação</strong>: Se a pontuação do usuário for superior a alguma das três melhores, ela fica armazenada no ranking enquanto jogo estiver em execução. </li>
 </ol>
