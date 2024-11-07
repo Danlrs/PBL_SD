@@ -6,25 +6,10 @@
 #include <sys/mman.h>
 #include <stdint.h>
 
-//Endereços usados para mapeamento e funcionalidades dos botões
-#define LW_BRIDGE_BASE 0xFF200000
-#define LW_BRIDGE_SPAN 0x00005000
-#define KEY_BASE 0x00000050
-#define BUTTON_0_MASK 0x01
-#define BUTTON_1_MASK 0x02
-#define BUTTON_2_MASK 0x04
-#define BUTTON_3_MASK 0x08
-
 //Tamanho do tabuleiro do jogo
 #define BOARD_WIDTH 10
 #define BOARD_HEIGHT 20
 #define FALL_DELAY 500000 // 1 segundo
-
-#define video_WHITE 0xFFFF
-#define video_GREY 0xC618
-#define video_MAGENTA 0xF81F
-#define video_BLACK 0x0000
-#define video_GREEN 0x07E0
 
 //Endereços usados para mapeamento e funcionalidades do acelerometro
 typedef int bool;
@@ -76,54 +61,54 @@ int board[BOARD_HEIGHT][BOARD_WIDTH];
 //a variavel shapes armazena todos os blocos possiveis de jogo e suas variacoes, vertical, horizontal, invertido verticalmente e invertido horizontalmente
 int shapes[7][4][4][4] = {
  // I
- {
- { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
- { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} },
- { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
- { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} }
- },
- // O
- {
- { {1,1}, {1,1} },
- { {1,1}, {1,1} },
- { {1,1}, {1,1} },
- { {1,1}, {1,1} }
- },
- // T
- {
- { {0,1,0}, {1,1,1}, {0,0,0} },
- { {0,1,0}, {0,1,1}, {0,1,0} },
- { {0,0,0}, {1,1,1}, {0,1,0} },
- { {0,1,0}, {1,1,0}, {0,1,0} }
- },
- // L
- {
- { {0,0,1}, {1,1,1}, {0,0,0} },
- { {0,1,0}, {0,1,0}, {0,1,1} },
- { {0,0,0}, {1,1,1}, {1,0,0} },
- { {1,1,0}, {0,1,0}, {0,1,0} }
- },
- // J
- {
- { {1,0,0}, {1,1,1}, {0,0,0} },
- { {0,1,1}, {0,1,0}, {0,1,0} },
- { {0,0,0}, {1,1,1}, {0,0,1} },
- { {0,1,0}, {0,1,0}, {1,1,0} }
- },
- // Z
- {
- { {1,1,0}, {0,1,1}, {0,0,0} },
- { {0,0,1}, {0,1,1}, {0,1,0} },
- { {1,1,0}, {0,1,1}, {0,0,0} },
- { {0,0,1}, {0,1,1}, {0,1,0} }
- },
- // S
- {
- { {0,1,1}, {1,1,0}, {0,0,0} },
- { {0,1,0}, {0,1,1}, {0,0,1} },
- { {0,1,1}, {1,1,0}, {0,0,0} },
- { {0,1,0}, {0,1,1}, {0,0,1} }
- }
+    {
+    { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
+    { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} },
+    { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
+    { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} }
+    },
+    // O
+    {
+    { {1,1}, {1,1} },
+    { {1,1}, {1,1} },
+    { {1,1}, {1,1} },
+    { {1,1}, {1,1} }
+    },
+    // T
+    {
+    { {0,1,0}, {1,1,1}, {0,0,0} },
+    { {0,1,0}, {0,1,1}, {0,1,0} },
+    { {0,0,0}, {1,1,1}, {0,1,0} },
+    { {0,1,0}, {1,1,0}, {0,1,0} }
+    },
+    // L
+    {
+    { {0,0,1}, {1,1,1}, {0,0,0} },
+    { {0,1,0}, {0,1,0}, {0,1,1} },
+    { {0,0,0}, {1,1,1}, {1,0,0} },
+    { {1,1,0}, {0,1,0}, {0,1,0} }
+    },
+    // J
+    {
+    { {1,0,0}, {1,1,1}, {0,0,0} },
+    { {0,1,1}, {0,1,0}, {0,1,0} },
+    { {0,0,0}, {1,1,1}, {0,0,1} },
+    { {0,1,0}, {0,1,0}, {1,1,0} }
+    },
+    // Z
+    {
+    { {1,1,0}, {0,1,1}, {0,0,0} },
+    { {0,0,1}, {0,1,1}, {0,1,0} },
+    { {1,1,0}, {0,1,1}, {0,0,0} },
+    { {0,0,1}, {0,1,1}, {0,1,0} }
+    },
+    // S
+    {
+    { {0,1,1}, {1,1,0}, {0,0,0} },
+    { {0,1,0}, {0,1,1}, {0,0,1} },
+    { {0,1,1}, {1,1,0}, {0,0,0} },
+    { {0,1,0}, {0,1,1}, {0,0,1} }
+    }
 };
 
 //variaveis que representam os registradores do acelerometro
@@ -150,243 +135,238 @@ int hscr[3] = {0, 0, 0};
 int pause2 = 0;
 int opt = 0;
 int jogando = 0;
-char scrStr[12] = "";
-char scrStr1[12] = "";
-char scrStr2[12] = "";
-char scrStr3[12] = "";
-char scr_msg[50] = "";
 
 // Função para mapear a memória
 void *map_physical_memory(off_t base, size_t span) {
- int fd;
- void *virtual_base;
+    int fd;
+    void *virtual_base;
 
- // Abre o arquivo de memória
- if ((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) {
- printf("ERROR: could not open \"/dev/mem\"...\n");
- return NULL;
- }
+    // Abre o arquivo de memória
+    if ((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) {
+        printf("ERROR: could not open \"/dev/mem\"...\n");
+    return NULL;
+    }
 
- // Mapeia a memória física para o espaço de endereçamento do processo
- virtual_base = mmap(NULL, span, (PROT_READ | PROT_WRITE), MAP_SHARED, fd, base);
- if (virtual_base == MAP_FAILED) {
- printf("ERROR: mmap() failed...\n");
- close(fd);
- return NULL;
- }
+    // Mapeia a memória física para o espaço de endereçamento do processo
+    virtual_base = mmap(NULL, span, (PROT_READ | PROT_WRITE), MAP_SHARED, fd, base);
+    if (virtual_base == MAP_FAILED) {
+        printf("ERROR: mmap() failed...\n");
+        close(fd);
+        return NULL;
+    }
 
- close(fd);
- return virtual_base;
+    close(fd);
+    return virtual_base;
 }
 
 void ADXL345_REG_READ(uint8_t address, uint8_t *value){
- *ic_data_cmd = address + 0x400;
- *ic_data_cmd = 0x100;
- while (*ic_rxflr == 0){}
- *value = *ic_data_cmd;
+    *ic_data_cmd = address + 0x400;
+    *ic_data_cmd = 0x100;
+    while (*ic_rxflr == 0){}
+    *value = *ic_data_cmd;
 }
 
 void ADXL345_REG_WRITE(uint8_t address, uint8_t value){
  
- // Send reg address (+0x400 to send START signal)
- *ic_data_cmd = address + 0x400;
- 
- // Send value
- *ic_data_cmd = value;
+    // Envia o endereço do registrador (+0x400 para enviar o sinal de START)
+    *ic_data_cmd = address + 0x400;
+
+    // Envia o valor
+    *ic_data_cmd = value;
 }
 
 bool ADXL345_WasActivityUpdated(){
- bool bReady = false;
- uint8_t data8;
- 
- ADXL345_REG_READ(ADXL345_REG_INT_SOURCE,&data8);
- if (data8 & XL345_ACTIVITY)
- bReady = true;
- 
- return bReady;
+    bool bReady = false;
+    uint8_t data8;
+
+    ADXL345_REG_READ(ADXL345_REG_INT_SOURCE,&data8);
+    if (data8 & XL345_ACTIVITY)
+        bReady = true;
+
+    return bReady;
 }
 
 //inicia o acelerometro
 void ADXL345_Init(){
 
- ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
+    ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
 
- ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, XL345_RATE_200);
+    ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, XL345_RATE_200);
 
- ADXL345_REG_WRITE(ADXL345_REG_THRESH_ACT, 0x04);
- ADXL345_REG_WRITE(ADXL345_REG_THRESH_INACT, 0x02);
- ADXL345_REG_WRITE(ADXL345_REG_TIME_INACT, 0x02);
- ADXL345_REG_WRITE(ADXL345_REG_ACT_INACT_CTL, 0xFF);
- ADXL345_REG_WRITE(ADXL345_REG_INT_ENABLE, XL345_ACTIVITY | XL345_INACTIVITY );
+    ADXL345_REG_WRITE(ADXL345_REG_THRESH_ACT, 0x04);
+    ADXL345_REG_WRITE(ADXL345_REG_THRESH_INACT, 0x02);
+    ADXL345_REG_WRITE(ADXL345_REG_TIME_INACT, 0x02);
+    ADXL345_REG_WRITE(ADXL345_REG_ACT_INACT_CTL, 0xFF);
+    ADXL345_REG_WRITE(ADXL345_REG_INT_ENABLE, XL345_ACTIVITY | XL345_INACTIVITY );
 
- ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
+    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
 
- ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
+    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
 
- ADXL345_Calibrate();
+    ADXL345_Calibrate();
 }
 
 void ADXL345_REG_MULTI_READ(uint8_t address, uint8_t values[], uint8_t len){
 
- // Send reg address (+0x400 to send START signal)
- *ic_data_cmd = address + 0x400;
- 
- // Send read signal len times
- int i;
- for (i=0;i<len;i++)
- *ic_data_cmd = 0x100;
+    // Envia o endereço do registrador (+0x400 para enviar o sinal de START)
+    *ic_data_cmd = address + 0x400;
 
- // Read the bytes
- int nth_byte=0;
- while (len){
- if ((*ic_rxflr) > 0){
- values[nth_byte] = *ic_data_cmd;
- nth_byte++;
- len--;
- }
- }
+    // Envia o sinal de leitura len vezes
+    int i;
+    for (i=0;i<len;i++)
+    *ic_data_cmd = 0x100;
+
+    // FAz a leitura dos bytes
+    int nth_byte=0;
+    while (len){
+        if ((*ic_rxflr) > 0){
+            values[nth_byte] = *ic_data_cmd;
+            nth_byte++;
+            len--;
+        }
+    }
 }
 
 //le as coordenadas dos eixos do acelerometro
 void ADXL345_XYZ_Read(int16_t szData16[3]){
- uint8_t szData8[6];
- ADXL345_REG_MULTI_READ(0x32, (uint8_t *)&szData8, sizeof(szData8));
+    uint8_t szData8[6];
+    ADXL345_REG_MULTI_READ(0x32, (uint8_t *)&szData8, sizeof(szData8));
 
- szData16[0] = (szData8[1] << 8) | szData8[0]; 
- szData16[1] = (szData8[3] << 8) | szData8[2];
- szData16[2] = (szData8[5] << 8) | szData8[4];
+    szData16[0] = (szData8[1] << 8) | szData8[0]; 
+    szData16[1] = (szData8[3] << 8) | szData8[2];
+    szData16[2] = (szData8[5] << 8) | szData8[4];
 }
 
 //faz a configuracao inicial do IC20
 void initConfigIC20(){
- ic_con = (int *) (I2C0_virtual + 0x0);
- ic_tar = (int *) (I2C0_virtual + 0x4);
- ic_fs_scl_hcnt = (int *) (I2C0_virtual + 0x1C);
- ic_fs_scl_lcnt = (int *) (I2C0_virtual + 0x20);
- ic_enable = (int *) (I2C0_virtual + 0x6C);
- ic_enable_status = (int *) (I2C0_virtual + 0x9C);
- ic_data_cmd = (int *) (I2C0_virtual + 0x10);
- ic_rxflr = (int *) (I2C0_virtual + 0x78);
+    ic_con = (int *) (I2C0_virtual + 0x0);
+    ic_tar = (int *) (I2C0_virtual + 0x4);
+    ic_fs_scl_hcnt = (int *) (I2C0_virtual + 0x1C);
+    ic_fs_scl_lcnt = (int *) (I2C0_virtual + 0x20);
+    ic_enable = (int *) (I2C0_virtual + 0x6C);
+    ic_enable_status = (int *) (I2C0_virtual + 0x9C);
+    ic_data_cmd = (int *) (I2C0_virtual + 0x10);
+    ic_rxflr = (int *) (I2C0_virtual + 0x78);
 
- *ic_enable = 2;
+    *ic_enable = 2;
 
- while(((*ic_enable_status)&0x1) == 1){}
+    while(((*ic_enable_status)&0x1) == 1){}
 
- *ic_con = 0x65;
- *ic_tar = 0x53;
- *ic_fs_scl_hcnt = 90;
- *ic_fs_scl_lcnt = 160;
- *ic_enable = 1;
+    *ic_con = 0x65;
+    *ic_tar = 0x53;
+    *ic_fs_scl_hcnt = 90;
+    *ic_fs_scl_lcnt = 160;
+    *ic_enable = 1;
 
- while(((*ic_enable_status)&0x1) == 0){}
+    while(((*ic_enable_status)&0x1) == 0){}
 }
 
 bool ADXL345_IsDataReady(){
- bool bReady = false;
- uint8_t data8;
- 
- ADXL345_REG_READ(ADXL345_REG_INT_SOURCE,&data8);
- if (data8 & XL345_DATAREADY)
- bReady = true;
- 
- return bReady;
+    bool bReady = false;
+    uint8_t data8;
+
+    ADXL345_REG_READ(ADXL345_REG_INT_SOURCE,&data8);
+    if (data8 & XL345_DATAREADY)
+        bReady = true;
+
+    return bReady;
 }
 
 //calibra os valores do acelerometro
 void ADXL345_Calibrate(){
- 
- int average_x = 0;
- int average_y = 0;
- int average_z = 0;
- int16_t XYZ[3];
- int8_t offset_x;
- int8_t offset_y;
- int8_t offset_z;
- 
- // stop measure
- ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
- 
- // Get current offsets
- ADXL345_REG_READ(ADXL345_REG_OFSX, (uint8_t *)&offset_x);
- ADXL345_REG_READ(ADXL345_REG_OFSY, (uint8_t *)&offset_y);
- ADXL345_REG_READ(ADXL345_REG_OFSZ, (uint8_t *)&offset_z);
- 
- // Use 100 hz rate for calibration. Save the current rate.
- uint8_t saved_bw;
- ADXL345_REG_READ(ADXL345_REG_BW_RATE, &saved_bw);
- ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, XL345_RATE_100);
- 
- // Use 16g range, full resolution. Save the current format.
- uint8_t saved_dataformat;
- ADXL345_REG_READ(ADXL345_REG_DATA_FORMAT, &saved_dataformat);
- ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
- 
- // start measure
- ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
- 
- // Get the average x,y,z accelerations over 32 samples (LSB 3.9 mg)
- int i = 0;
- while (i < 32){
- // Note: use DATA_READY here, can't use ACTIVITY because board is stationary.
- if (ADXL345_IsDataReady()){
- ADXL345_XYZ_Read(XYZ);
- average_x += XYZ[0];
- average_y += XYZ[1];
- average_z += XYZ[2];
- i++;
- }
- }
 
- average_x = ROUNDED_DIVISION(average_x, 32);
- average_y = ROUNDED_DIVISION(average_y, 32);
- average_z = ROUNDED_DIVISION(average_z, 32);
- 
- // stop measure
- ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY); 
- 
- // Calculate the offsets (LSB 15.6 mg)
- offset_x += ROUNDED_DIVISION(0-average_x, 4);
- offset_y += ROUNDED_DIVISION(0-average_y, 4);
- offset_z += ROUNDED_DIVISION(256-average_z, 4);
- 
- // Set the offset registers
- ADXL345_REG_WRITE(ADXL345_REG_OFSX, offset_x);
- ADXL345_REG_WRITE(ADXL345_REG_OFSY, offset_y);
- ADXL345_REG_WRITE(ADXL345_REG_OFSZ, offset_z);
- 
- // Restore original bw rate
- ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, saved_bw);
- 
- // Restore original data format
- ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, saved_dataformat);
- 
- // start measure
- ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
+    int average_x = 0;
+    int average_y = 0;
+    int average_z = 0;
+    int16_t XYZ[3];
+    int8_t offset_x;
+    int8_t offset_y;
+    int8_t offset_z;
+
+    /// Para a medida
+    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
+
+    //pega os offsets atuais
+    ADXL345_REG_READ(ADXL345_REG_OFSX, (uint8_t *)&offset_x);
+    ADXL345_REG_READ(ADXL345_REG_OFSY, (uint8_t *)&offset_y);
+    ADXL345_REG_READ(ADXL345_REG_OFSZ, (uint8_t *)&offset_z);
+
+    // Usa 100Hz para calibração. Salva a taxa atual.
+    uint8_t saved_bw;
+    ADXL345_REG_READ(ADXL345_REG_BW_RATE, &saved_bw);
+    ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, XL345_RATE_100);
+
+    // Usa alcance de 16g, resolução completa. Salva o formato atual.
+    uint8_t saved_dataformat;
+    ADXL345_REG_READ(ADXL345_REG_DATA_FORMAT, &saved_dataformat);
+    ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
+
+    // Inícia a medida
+    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
+
+    // Pega a média de acelerações de x, y e z em 32 amostras (LSB 3.9 mg)
+    int i = 0;
+    while (i < 32){
+    // Detalhe: use DATA_READY aqui, não pode usar ACTIVITY porque o tabuleiro é fixo.
+    if (ADXL345_IsDataReady()){
+        ADXL345_XYZ_Read(XYZ);
+        average_x += XYZ[0];
+        average_y += XYZ[1];
+        average_z += XYZ[2];
+        i++;
+    }
+    }
+
+    average_x = ROUNDED_DIVISION(average_x, 32);
+    average_y = ROUNDED_DIVISION(average_y, 32);
+    average_z = ROUNDED_DIVISION(average_z, 32);
+
+    // Para a medida
+    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY); 
+
+    // Calcula os offsets (LSB 15.6 mg)
+    offset_x += ROUNDED_DIVISION(0-average_x, 4);
+    offset_y += ROUNDED_DIVISION(0-average_y, 4);
+    offset_z += ROUNDED_DIVISION(256-average_z, 4);
+
+    // Define o offset do registrador
+    ADXL345_REG_WRITE(ADXL345_REG_OFSX, offset_x);
+    ADXL345_REG_WRITE(ADXL345_REG_OFSY, offset_y);
+    ADXL345_REG_WRITE(ADXL345_REG_OFSZ, offset_z);
+
+    // Restaura a taxa original bw
+    ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, saved_bw);
+
+    // Restaura o formato original dos dados
+    ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, saved_dataformat);
+
+    // Inícia a medida
+    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
 }
 
 
 //Cria o tabuleiro do jogo
 void initBoard() {
- for (int i = 0; i < BOARD_HEIGHT; i++) {
- for (int j = 0; j < BOARD_WIDTH; j++) {
- board[i][j] = 0;
- }
- }
+    for (int i = 0; i < BOARD_HEIGHT; i++) {
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            board[i][j] = 0;
+        }
+    }
 }
     
 
 // Desenhar uma linha vertical
 void draw_vertical(int pos, int color, int tamanho) {
- for (int i = 0; i < tamanho; i++){
- draw_box(pos + i*160, color);
- }
+    for (int i = 0; i < tamanho; i++){
+        draw_box(pos + i*160, color);
+    }
 }
 
 // Desenhar uma linha horizontal
 void draw_horizontal(int pos, int color, int tamanho) {
- for (int i = 0; i < tamanho; i++){
- draw_box(pos + i*2, color);
- }
+    for (int i = 0; i < tamanho; i++){
+        draw_box(pos + i*2, color);
+    }
 }
 
 // Desenhar uma linha fina vertical
@@ -403,6 +383,7 @@ void draw_horizontal_text(int pos, int color, int tamanho) {
     }
 }
 
+//Divide os digitos do score para permitir impressão na tela
 int* ler_pontos(int pontos, int* tamanho_array) {
     // Se o número for negativo, converte para positivo
     if (pontos < 0) {
@@ -542,23 +523,23 @@ void desenhar_number(int posicao, int numero){
     }
 
 }
-// Função que desenha todas as letras de "Tetris" com sombra e cores diferentes
+// Função que desenha todas as letras de "Tetris" com cores diferentes
 void draw_menu() {
     // Desenhar a letra T
     draw_horizontal(565, 0b110110110, 5);
     draw_vertical(729, 0b110110110, 4);
 
-    // Desenhar a letra E (Verde)
+    // Desenhar a letra E 
     draw_vertical(577, 0b001101010, 5);
     draw_horizontal(579, 0b001101010, 4);
     draw_horizontal(899, 0b001101010, 3);
     draw_horizontal(1219, 0b001101010, 4);
 
-    // Desenhar a letra T (segunda vez - Azul)
+    // Desenhar a letra T (segunda vez)
     draw_horizontal(589, 0b101011001, 5);
     draw_vertical(753, 0b101011001, 4);
 
-    // Desenhar a letra R (Amarelo)
+    // Desenhar a letra R 
     draw_vertical(601, 0b001110111, 5);
     draw_horizontal(603, 0b001110111, 2);
     draw_box(767, 0b001110111);
@@ -584,7 +565,6 @@ void drawBoard(){
 
     //a variavel menu faz o controle para checar se o usuario esta no menu do jogo ou se esta jogando
     if( menu == 1 ){
-        //limpar_tela();
         draw_menu();
 
         char hscr_msg[50] = "HIGHSCORE: ";
@@ -600,8 +580,7 @@ void drawBoard(){
         fflush(stdin);
         scr = 0;
         if(opt == 0){
-            //draw_text(2502, 0b111111111); // Seletor em Jogar
-
+            // Seletor em Jogar
             // Desenha a palavra Jogar
             // Desenha a letra J
             draw_vertical_text(2588, 0b010111000, 2);
@@ -660,8 +639,7 @@ void drawBoard(){
             draw_vertical_text(3162, 0b111111111, 2);
 
         } else if(opt == 1){
-            //draw_text(3062, 0b111111111); // Seletor em Sair
-
+            // Seletor em Sair
             // Desenha a palavra Jogar
             // Desenha a letra J
             draw_vertical_text(2588, 0b111111111, 2);
@@ -695,63 +673,38 @@ void drawBoard(){
 
             // Desenhar a palavra Sair
             // Desenha a letra S
-            draw_horizontal_text(2909, 0b010111000, 2);
-            draw_text(2988, 0b010111000);
-            draw_horizontal_text(3068, 0b010111000, 3);
-            draw_text(3150, 0b010111000);
-            draw_horizontal_text(3228, 0b010111000, 2);
+            draw_horizontal_text(2909, 0b000000111, 2);
+            draw_text(2988, 0b000000111);
+            draw_horizontal_text(3068, 0b000000111, 3);
+            draw_text(3150, 0b000000111);
+            draw_horizontal_text(3228, 0b000000111, 2);
 
             // Desenha a letra A
-            draw_horizontal_text(2912, 0b010111000, 3);
-            draw_vertical_text(2992, 0b010111000, 4);
-            draw_vertical_text(2994, 0b010111000, 4);
-            draw_text(3073, 0b010111000);
+            draw_horizontal_text(2912, 0b000000111, 3);
+            draw_vertical_text(2992, 0b000000111, 4);
+            draw_vertical_text(2994, 0b000000111, 4);
+            draw_text(3073, 0b000000111);
 
             // Desenha a letra I
-            draw_horizontal_text(2916, 0b010111000, 3);
-            draw_vertical_text(2997, 0b010111000, 3);
-            draw_horizontal_text(3236, 0b010111000, 3);
+            draw_horizontal_text(2916, 0b000000111, 3);
+            draw_vertical_text(2997, 0b000000111, 3);
+            draw_horizontal_text(3236, 0b000000111, 3);
 
             // Desenha a letra R
-            draw_horizontal_text(2920, 0b010111000, 2);
-            draw_vertical_text(3000, 0b010111000, 4);
-            draw_text(3002, 0b010111000);
-            draw_text(3081, 0b010111000);
-            draw_vertical_text(3162, 0b010111000, 2);
-
+            draw_horizontal_text(2920, 0b000000111, 2);
+            draw_vertical_text(3000, 0b000000111, 4);
+            draw_text(3002, 0b000000111);
+            draw_text(3081, 0b000000111);
+            draw_vertical_text(3162, 0b000000111, 2);
         }
 
     }else{
-
-        //limpar_tela();
         // Desenhando as bordas do jogo
         draw_vertical(748, 0b111111111, 20);
         draw_horizontal(3948, 0b111111111, 12);
         draw_vertical(770, 0b111111111, 20);
-        ////video_box(80,10,210,239,video_WHITE);
-        char scr_msg[50] = "SCORE: ";
-        char hscr_msg[50] = "HIGHSCORE: ";
-        char hscr1_msg[50] = "1- ";
-        char hscr2_msg[50] = "2- ";
-        char hscr3_msg[50] = "3- ";
-        fflush(stdin);
-        sprintf(scrStr1, "%d", hscr[0]);
-        fflush(stdin);
-        sprintf(scrStr2, "%d", hscr[1]);
-        fflush(stdin);
-        sprintf(scrStr3, "%d", hscr[2]);
-        fflush(stdin);
-        sprintf(scrStr, "%d", scr);
-
-        int tamanho_array_hscr1;
-        int* digitos_hscr1 = ler_pontos(hscr[0], &tamanho_array_hscr1);  // Lê os pontos e define o tamanho do array
-
-        int tamanho_array_hscr2;
-        int* digitos_hscr2 = ler_pontos(hscr[1], &tamanho_array_hscr2);  // Lê os pontos e define o tamanho do array
-
-        int tamanho_array_hscr3;
-        int* digitos_hscr3 = ler_pontos(hscr[2], &tamanho_array_hscr3);  // Lê os pontos e define o tamanho do array
-
+       
+        //Desenha os 3 HighScores
         //desenhar a letra H
         draw_vertical_text(728, 0b111111111, 5);
         draw_text(889, 0b111111111);
@@ -885,6 +838,7 @@ void drawBoard(){
         if(pause2 == 1){
             // If que checa a opção a ser inserida no menu de pausa e muda o indicador (>)
             if(opt == 0){
+                //Desenhando a tela preta para tampar o jogo
                 draw_vertical(750, 0b000000000, 20);
                 draw_vertical(752, 0b000000000, 20);
                 draw_vertical(754, 0b000000000, 20);
@@ -904,7 +858,7 @@ void drawBoard(){
                 draw_text(2675, 0b010111000);
                 draw_text(2754, 0b010111000);
 
-                // Desenhando X
+                // Desenhando X de sair
                 draw_text(2440, 0b111111111);
                 draw_text(2521, 0b111111111);
                 draw_text(2602, 0b111111111);
@@ -916,6 +870,7 @@ void drawBoard(){
                 draw_text(2444, 0b111111111);
 
             } else if(opt == 1){
+                //Desenhando a tela preta para tampar o jogo
                 draw_vertical(750, 0b000000000, 20);
                 draw_vertical(752, 0b000000000, 20);
                 draw_vertical(754, 0b000000000, 20);
@@ -935,7 +890,7 @@ void drawBoard(){
                 draw_text(2675, 0b111111111);
                 draw_text(2754, 0b111111111);
 
-                // Desenhando X
+                // Desenhando X de sair
                 draw_text(2440, 0b000000111);
                 draw_text(2521, 0b000000111);
                 draw_text(2602, 0b000000111);
@@ -945,7 +900,6 @@ void drawBoard(){
                 draw_text(2764, 0b000000111);
                 draw_text(2523, 0b000000111);
                 draw_text(2444, 0b000000111);
-
             }
         }
 
@@ -1009,33 +963,27 @@ void drawBoard(){
             draw_text(4708, 0b000000111);
         } 
     }
-
 }
 
 //Função que remove a linha caso totalmente preenchida e move as que estão acima dela uma unidade abaixo, ao final soma 100 ao score do jogdor
 void removeLine(int y) {
-
     for (int j = 0; j < BOARD_WIDTH; j++) {
         board[y][j] = 0;
     }
-
     for (int i = y; i > 0; i--) {
-    for (int j = 0; j < BOARD_WIDTH; j++) {
-        board[i][j] = board[i - 1][j];
-        } 
+        for (int j = 0; j < BOARD_WIDTH; j++) {
+            board[i][j] = board[i - 1][j];
+            } 
     }
-
     for (int j = 0; j < BOARD_WIDTH; j++) {
         board[0][j] = 0;
     }
-
     scr += 10;
     limpar_tela();
 }
 
 //Checa se existem linhas preenchidas na matriz e as remove
 void checkLines() {
-
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         int fullLine = 1;
         for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -1106,10 +1054,10 @@ void moveDown() {
 
 //Função para rotacionar a peça
 void rotateShape() {
- int newRotation = (currentRotation + 1) % 4;
- if (!checkCollision(currentX, currentY, newRotation)) {
- currentRotation = newRotation;
- }
+    int newRotation = (currentRotation + 1) % 4;
+    if (!checkCollision(currentX, currentY, newRotation)) {
+        currentRotation = newRotation;
+    }
 }
 
 //Função para movar a peça para a esquerda
@@ -1141,187 +1089,187 @@ int main() {
 
     //checa o endereco do device (acelerometro)
     if (devid == 0xE5){
-    ADXL345_Init();
-    srand(time(NULL));
+        ADXL345_Init();
+        srand(time(NULL));
 
-    time_t lastFallTime = time(NULL);
+        time_t lastFallTime = time(NULL);
 
-    // Mapeia a memória
-    mapm();
-    limpar_tela();
-    
-    int button_value = 0;
-    int hs_controller = 0;
-    while (1) {
-        int button = button_pressed();
-        if (button != 15) {
-            button_value = button;
-        }
+        // Mapeia a memória
+        mapm();
+        limpar_tela();
+        
+        int button_value = 0;
+        int hs_controller = 0;
+        while (1) {
+            int button = button_pressed();
+            if (button != 15) {
+                button_value = button;
+            }
 
-        //if checa se o jogador esta no jogo (menu == 0) e se não perdeu (jogando != 2)
-        if(menu == 0 && jogando != 2){
-            jogando = 1;
-        //if checa se o jogo não esta pausado (pause2 == 0) e se esta em jogo (jogando == 1)
-        if(pause2 == 0 && jogando == 1){
+            //if checa se o jogador esta no jogo (menu == 0) e se não perdeu (jogando != 2)
+            if(menu == 0 && jogando != 2){
+                jogando = 1;
+            //if checa se o jogo não esta pausado (pause2 == 0) e se esta em jogo (jogando == 1)
+            if(pause2 == 0 && jogando == 1){
 
-            ADXL345_XYZ_Read(XYZ);
-            //checa se a placa foi inclinada a direita e move a peça
-            if(XYZ[0]*mg_per_lsb >= 150){
-                moveRight();
-                drawBoard();
+                ADXL345_XYZ_Read(XYZ);
+                //checa se a placa foi inclinada a direita e move a peça
+                if(XYZ[0]*mg_per_lsb >= 150){
+                    moveRight();
+                    drawBoard();
+                    usleep(50000); 
+                //checa se a placa foi inclinada a esquerda e move a peça
+                }else if(XYZ[0]*mg_per_lsb <= -150){
+                    moveLeft();
+                    drawBoard();
+                    usleep(50000); 
+                }
+                //checa se a placa foi inclinada para baixo e move a peça
+                if(XYZ[1]*mg_per_lsb <= -200){
+                    moveDown();
+                    drawBoard();
+                }
+
+                //checa se o botao 0 foi pressionado e caso seja, pausa o jogo
+                if (button_value == 14 && button == 15) {
+                    button_value = 15;
+                    printf("Pausando...\n");
+                    pause2 = 1;
+                }
+                //checa se o botao 1 foi pressionado e caso seja, gira a peça atual
+                if (button_value == 13 && button == 15) {
+                    button_value = 15;
+                    rotateShape();
+                    drawBoard();
+                }
+
+                // checagem para queda automatica da peça
+                if (difftime(time(NULL), lastFallTime) >= FALL_DELAY / 500000.0) {
+                    moveDown();
+                    drawBoard();
+                    //limpar_tela();
+                    lastFallTime = time(NULL);
+                }
+
+                //desenha a matriz na tela do monitor
+                //drawBoard();
                 usleep(50000); 
-            //checa se a placa foi inclinada a esquerda e move a peça
-            }else if(XYZ[0]*mg_per_lsb <= -150){
-                moveLeft();
-                drawBoard();
-                usleep(50000); 
-            }
-            //checa se a placa foi inclinada para baixo e move a peça
-            if(XYZ[1]*mg_per_lsb <= -200){
-                moveDown();
-                drawBoard();
-            }
 
-            //checa se o botao 0 foi pressionado e caso seja, pausa o jogo
-            if (button_value == 14 && button == 15) {
-                button_value = 15;
-                printf("Pausando...\n");
-                pause2 = 1;
-            }
-            //checa se o botao 1 foi pressionado e caso seja, gira a peça atual
+            //Checa se o jogo foi pausado 
+            } else if(pause2 == 1 && jogando == 1){
+                if (hs_controller == 0){
+                    drawBoard();
+                    hs_controller = 1;
+                }
+                
+
+            //Muda a opção a ser pressionada
             if (button_value == 13 && button == 15) {
                 button_value = 15;
-                rotateShape();
-                drawBoard();
-            }
+                opt = !opt;
+                limpar_tela();
+                hs_controller = 0;
+            } 
 
-            // checagem para queda automatica da peça
-            if (difftime(time(NULL), lastFallTime) >= FALL_DELAY / 500000.0) {
-                moveDown();
-                drawBoard();
-                //limpar_tela();
-                lastFallTime = time(NULL);
-            }
-
-            //desenha a matriz na tela do monitor
-            //drawBoard();
-            usleep(50000); 
-
-        //Checa se o jogo foi pausado 
-        } else if(pause2 == 1 && jogando == 1){
-            if (hs_controller == 0){
-                drawBoard();
-                hs_controller = 1;
-            }
-            
-
-        //Muda a opção a ser pressionada
-        if (button_value == 13 && button == 15) {
-            button_value = 15;
-            opt = !opt;
-            limpar_tela();
-            hs_controller = 0;
-        } 
-
-        //despausa o jogo
-        if (button_value == 14 && button == 15 && opt == 0) {
-            button_value = 15;
-            printf("Continuando...\n");
-            pause2 = 0;
-            limpar_tela();
-            hs_controller = 0;
-
-        //sai da partida 
-        } else if(button_value == 14 && button == 15 && opt == 1){
-            button_value = 15;
-            menu = 1;
-            jogando = 0;
-            opt = 0;
-            pause2 = 0;
-            scr = 0;
-            printf("saindo...\n");
-            limpar_tela();
-            hs_controller = 0;
-        }
-
-        }
-
-        //Checagem para reiniciar o tabuleiro sempre que o jogador vai do menu inicial para o jogo
-        }else if(jogando == 0){
-
-            initBoard();
-            newShape();
-
-            drawBoard();
-
-        if (button_value == 13 && button == 15) {
-            button_value = 15;
-            opt = !opt;
-            limpar_tela();
-        } 
-
-        //inicia o jogo
-        if (button_value == 14 && button == 15 && opt == 0) {
-            button_value = 15;
-            printf("iniciando...\n");
-            menu = 0;
-            limpar_tela();
-        //sai do jogo 
-        } else if(button_value == 14 && button == 15 && opt == 1){
-            button_value = 15;
-            printf("saindo...\n");
-            limpar_tela();
-            exit(0);
-        }
-
-        //checa se o jogador perdeu (jogando == 2) e caso o score dele seja maior que um dos 3 recordes, salva o score dele
-        }else if(jogando == 2){
-
-            if(scr > hscr[0]){
-                hscr[2] = hscr[1];
-                hscr[1] = hscr[0];
-                hscr[0] = scr;
-                if (hs_controller == 0){
-                    limpar_tela();
-                    drawBoard();
-                    hs_controller = 1;
-                }
-                scr = 0;
-            }else if(scr > hscr[1]){
-                hscr[2] = hscr[1];
-                hscr[1] = scr;
-                if (hs_controller == 0){
-                    limpar_tela();
-                    drawBoard();
-                    hs_controller = 1;
-                }
-                scr = 0;
-            }else if(scr > hscr[2]){
-                hscr[2] = scr;
-                if (hs_controller == 0){
-                    limpar_tela();
-                    drawBoard();
-                    hs_controller = 1;
-                }
-                scr = 0;
-            }
-
-            //volta ao menu
+            //despausa o jogo
             if (button_value == 14 && button == 15 && opt == 0) {
+                button_value = 15;
+                printf("Continuando...\n");
+                pause2 = 0;
+                limpar_tela();
+                hs_controller = 0;
+
+            //sai da partida 
+            } else if(button_value == 14 && button == 15 && opt == 1){
                 button_value = 15;
                 menu = 1;
                 jogando = 0;
-                hs_controller = 0;
                 opt = 0;
                 pause2 = 0;
                 scr = 0;
                 printf("saindo...\n");
                 limpar_tela();
+                hs_controller = 0;
             }
 
-        }
-    }
+            }
 
+            //Checagem para reiniciar o tabuleiro sempre que o jogador vai do menu inicial para o jogo
+            }else if(jogando == 0){
+
+                initBoard();
+                newShape();
+
+                drawBoard();
+
+            if (button_value == 13 && button == 15) {
+                button_value = 15;
+                opt = !opt;
+                limpar_tela();
+            } 
+
+            //inicia o jogo
+            if (button_value == 14 && button == 15 && opt == 0) {
+                button_value = 15;
+                printf("iniciando...\n");
+                menu = 0;
+                limpar_tela();
+            //sai do jogo 
+            } else if(button_value == 14 && button == 15 && opt == 1){
+                button_value = 15;
+                printf("saindo...\n");
+                limpar_tela();
+                exit(0);
+            }
+
+            //checa se o jogador perdeu (jogando == 2) e caso o score dele seja maior que um dos 3 recordes, salva o score dele
+            }else if(jogando == 2){
+
+                if(scr > hscr[0]){
+                    hscr[2] = hscr[1];
+                    hscr[1] = hscr[0];
+                    hscr[0] = scr;
+                    if (hs_controller == 0){
+                        limpar_tela();
+                        drawBoard();
+                        hs_controller = 1;
+                    }
+                    scr = 0;
+                }else if(scr > hscr[1]){
+                    hscr[2] = hscr[1];
+                    hscr[1] = scr;
+                    if (hs_controller == 0){
+                        limpar_tela();
+                        drawBoard();
+                        hs_controller = 1;
+                    }
+                    scr = 0;
+                }else if(scr > hscr[2]){
+                    hscr[2] = scr;
+                    if (hs_controller == 0){
+                        limpar_tela();
+                        drawBoard();
+                        hs_controller = 1;
+                    }
+                    scr = 0;
+                }
+
+                //volta ao menu
+                if (button_value == 14 && button == 15 && opt == 0) {
+                    button_value = 15;
+                    menu = 1;
+                    jogando = 0;
+                    hs_controller = 0;
+                    opt = 0;
+                    pause2 = 0;
+                    scr = 0;
+                    printf("saindo...\n");
+                    limpar_tela();
+                }
+
+            }
+        }
+        
     } else {
         printf("Incorrect device ID\n");
     }
