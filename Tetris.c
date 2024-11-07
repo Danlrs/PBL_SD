@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <termios.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <stdint.h>
 
+//Endereços usados para mapeamento e funcionalidades dos botões
 #define LW_BRIDGE_BASE 0xFF200000
 #define LW_BRIDGE_SPAN 0x00005000
 #define KEY_BASE 0x00000050
@@ -15,6 +15,7 @@
 #define BUTTON_2_MASK 0x04
 #define BUTTON_3_MASK 0x08
 
+//Tamanho do tabuleiro do jogo
 #define BOARD_WIDTH 10
 #define BOARD_HEIGHT 20
 #define FALL_DELAY 500000 // 1 segundo
@@ -25,6 +26,7 @@
 #define video_BLACK 0x0000
 #define video_GREEN 0x07E0
 
+//Endereços usados para mapeamento e funcionalidades do acelerometro
 typedef int bool;
 #define true 1
 #define false 0
@@ -62,60 +64,69 @@ typedef int bool;
 #define XL345_DATAREADY 0x80
 #define ROUNDED_DIVISION(n, d) (((n < 0) ^ (d < 0)) ? ((n - d/2)/d) : ((n + d/2)/d))
 
+extern void mapm();
+extern void draw_box(int posicao, int cor);
+extern void draw_text(int posicao, int cor);
+extern void limpar_tela();
+extern int button_pressed();
+
+//Tabuleiro do jogo
 int board[BOARD_HEIGHT][BOARD_WIDTH];
 
+//a variavel shapes armazena todos os blocos possiveis de jogo e suas variacoes, vertical, horizontal, invertido verticalmente e invertido horizontalmente
 int shapes[7][4][4][4] = {
  // I
  {
-    { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
-    { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} },
-    { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
-    { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} }
+ { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
+ { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} },
+ { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
+ { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} }
  },
  // O
  {
-    { {1,1}, {1,1} },
-    { {1,1}, {1,1} },
-    { {1,1}, {1,1} },
-    { {1,1}, {1,1} }
+ { {1,1}, {1,1} },
+ { {1,1}, {1,1} },
+ { {1,1}, {1,1} },
+ { {1,1}, {1,1} }
  },
  // T
  {
-    { {0,1,0}, {1,1,1}, {0,0,0} },
-    { {0,1,0}, {0,1,1}, {0,1,0} },
-    { {0,0,0}, {1,1,1}, {0,1,0} },
-    { {0,1,0}, {1,1,0}, {0,1,0} }
+ { {0,1,0}, {1,1,1}, {0,0,0} },
+ { {0,1,0}, {0,1,1}, {0,1,0} },
+ { {0,0,0}, {1,1,1}, {0,1,0} },
+ { {0,1,0}, {1,1,0}, {0,1,0} }
  },
  // L
  {
-    { {0,0,1}, {1,1,1}, {0,0,0} },
-    { {0,1,0}, {0,1,0}, {0,1,1} },
-    { {0,0,0}, {1,1,1}, {1,0,0} },
-    { {1,1,0}, {0,1,0}, {0,1,0} }
+ { {0,0,1}, {1,1,1}, {0,0,0} },
+ { {0,1,0}, {0,1,0}, {0,1,1} },
+ { {0,0,0}, {1,1,1}, {1,0,0} },
+ { {1,1,0}, {0,1,0}, {0,1,0} }
  },
  // J
  {
-    { {1,0,0}, {1,1,1}, {0,0,0} },
-    { {0,1,1}, {0,1,0}, {0,1,0} },
-    { {0,0,0}, {1,1,1}, {0,0,1} },
-    { {0,1,0}, {0,1,0}, {1,1,0} }
+ { {1,0,0}, {1,1,1}, {0,0,0} },
+ { {0,1,1}, {0,1,0}, {0,1,0} },
+ { {0,0,0}, {1,1,1}, {0,0,1} },
+ { {0,1,0}, {0,1,0}, {1,1,0} }
  },
  // Z
  {
-    { {1,1,0}, {0,1,1}, {0,0,0} },
-    { {0,0,1}, {0,1,1}, {0,1,0} },
-    { {1,1,0}, {0,1,1}, {0,0,0} },
-    { {0,0,1}, {0,1,1}, {0,1,0} }
+ { {1,1,0}, {0,1,1}, {0,0,0} },
+ { {0,0,1}, {0,1,1}, {0,1,0} },
+ { {1,1,0}, {0,1,1}, {0,0,0} },
+ { {0,0,1}, {0,1,1}, {0,1,0} }
  },
  // S
  {
-    { {0,1,1}, {1,1,0}, {0,0,0} },
-    { {0,1,0}, {0,1,1}, {0,0,1} },
-    { {0,1,1}, {1,1,0}, {0,0,0} },
-    { {0,1,0}, {0,1,1}, {0,0,1} }
+ { {0,1,1}, {1,1,0}, {0,0,0} },
+ { {0,1,0}, {0,1,1}, {0,0,1} },
+ { {0,1,1}, {1,1,0}, {0,0,0} },
+ { {0,1,0}, {0,1,1}, {0,0,1} }
  }
 };
 
+//variaveis que representam os registradores do acelerometro
 void * I2C0_virtual;
 void * sysmgr_virtual;
 volatile int * ic_con;
@@ -128,6 +139,7 @@ volatile int * ic_data_cmd;
 volatile int * ic_rxflr;
 unsigned int * sysmgr_virtual_ptr;
 
+//variaveis de controle e variaveis de execucao do jogo
 int currentShape;
 int currentRotation;
 int currentX;
@@ -146,275 +158,433 @@ char scr_msg[50] = "";
 
 // Função para mapear a memória
 void *map_physical_memory(off_t base, size_t span) {
-    int fd;
-    void *virtual_base;
+ int fd;
+ void *virtual_base;
 
-    // Abre o arquivo de memória
-    if ((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) {
-        printf("ERROR: could not open \"/dev/mem\"...\n");
-        return NULL;
-    }
+ // Abre o arquivo de memória
+ if ((fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1) {
+ printf("ERROR: could not open \"/dev/mem\"...\n");
+ return NULL;
+ }
 
-    // Mapeia a memória física para o espaço de endereçamento do processo
-    virtual_base = mmap(NULL, span, (PROT_READ | PROT_WRITE), MAP_SHARED, fd, base);
-    if (virtual_base == MAP_FAILED) {
-        printf("ERROR: mmap() failed...\n");
-        close(fd);
-        return NULL;
-    }
+ // Mapeia a memória física para o espaço de endereçamento do processo
+ virtual_base = mmap(NULL, span, (PROT_READ | PROT_WRITE), MAP_SHARED, fd, base);
+ if (virtual_base == MAP_FAILED) {
+ printf("ERROR: mmap() failed...\n");
+ close(fd);
+ return NULL;
+ }
 
-    close(fd);
-    return virtual_base;
+ close(fd);
+ return virtual_base;
 }
 
 void ADXL345_REG_READ(uint8_t address, uint8_t *value){
-    *ic_data_cmd = address + 0x400;
-    *ic_data_cmd = 0x100;
-    while (*ic_rxflr == 0){}
-    *value = *ic_data_cmd;
+ *ic_data_cmd = address + 0x400;
+ *ic_data_cmd = 0x100;
+ while (*ic_rxflr == 0){}
+ *value = *ic_data_cmd;
 }
 
 void ADXL345_REG_WRITE(uint8_t address, uint8_t value){
  
-    // Send reg address (+0x400 to send START signal)
-    *ic_data_cmd = address + 0x400;
-    
-    // Send value
-    *ic_data_cmd = value;
+ // Send reg address (+0x400 to send START signal)
+ *ic_data_cmd = address + 0x400;
+ 
+ // Send value
+ *ic_data_cmd = value;
 }
 
 bool ADXL345_WasActivityUpdated(){
-    bool bReady = false;
-    uint8_t data8;
-    
-    ADXL345_REG_READ(ADXL345_REG_INT_SOURCE,&data8);
-    if (data8 & XL345_ACTIVITY)
-    bReady = true;
-    
-    return bReady;
+ bool bReady = false;
+ uint8_t data8;
+ 
+ ADXL345_REG_READ(ADXL345_REG_INT_SOURCE,&data8);
+ if (data8 & XL345_ACTIVITY)
+ bReady = true;
+ 
+ return bReady;
 }
 
+//inicia o acelerometro
 void ADXL345_Init(){
 
-    ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
+ ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
 
-    ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, XL345_RATE_200);
+ ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, XL345_RATE_200);
 
-    ADXL345_REG_WRITE(ADXL345_REG_THRESH_ACT, 0x04);
-    ADXL345_REG_WRITE(ADXL345_REG_THRESH_INACT, 0x02);
-    ADXL345_REG_WRITE(ADXL345_REG_TIME_INACT, 0x02);
-    ADXL345_REG_WRITE(ADXL345_REG_ACT_INACT_CTL, 0xFF);
-    ADXL345_REG_WRITE(ADXL345_REG_INT_ENABLE, XL345_ACTIVITY | XL345_INACTIVITY );
+ ADXL345_REG_WRITE(ADXL345_REG_THRESH_ACT, 0x04);
+ ADXL345_REG_WRITE(ADXL345_REG_THRESH_INACT, 0x02);
+ ADXL345_REG_WRITE(ADXL345_REG_TIME_INACT, 0x02);
+ ADXL345_REG_WRITE(ADXL345_REG_ACT_INACT_CTL, 0xFF);
+ ADXL345_REG_WRITE(ADXL345_REG_INT_ENABLE, XL345_ACTIVITY | XL345_INACTIVITY );
 
-    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
+ ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
 
-    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
+ ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
 
-    ADXL345_Calibrate();
+ ADXL345_Calibrate();
 }
 
 void ADXL345_REG_MULTI_READ(uint8_t address, uint8_t values[], uint8_t len){
 
-    // Send reg address (+0x400 to send START signal)
-    *ic_data_cmd = address + 0x400;
-    
-    // Send read signal len times
-    int i;
-    for (i=0;i<len;i++)
-    *ic_data_cmd = 0x100;
+ // Send reg address (+0x400 to send START signal)
+ *ic_data_cmd = address + 0x400;
+ 
+ // Send read signal len times
+ int i;
+ for (i=0;i<len;i++)
+ *ic_data_cmd = 0x100;
 
-    // Read the bytes
-    int nth_byte=0;
-    while (len){
-        if ((*ic_rxflr) > 0){
-            values[nth_byte] = *ic_data_cmd;
-            nth_byte++;
-            len--;
-        }
-    }
+ // Read the bytes
+ int nth_byte=0;
+ while (len){
+ if ((*ic_rxflr) > 0){
+ values[nth_byte] = *ic_data_cmd;
+ nth_byte++;
+ len--;
+ }
+ }
 }
 
+//le as coordenadas dos eixos do acelerometro
 void ADXL345_XYZ_Read(int16_t szData16[3]){
-    uint8_t szData8[6];
-    ADXL345_REG_MULTI_READ(0x32, (uint8_t *)&szData8, sizeof(szData8));
+ uint8_t szData8[6];
+ ADXL345_REG_MULTI_READ(0x32, (uint8_t *)&szData8, sizeof(szData8));
 
-    szData16[0] = (szData8[1] << 8) | szData8[0]; 
-    szData16[1] = (szData8[3] << 8) | szData8[2];
-    szData16[2] = (szData8[5] << 8) | szData8[4];
+ szData16[0] = (szData8[1] << 8) | szData8[0]; 
+ szData16[1] = (szData8[3] << 8) | szData8[2];
+ szData16[2] = (szData8[5] << 8) | szData8[4];
 }
 
+//faz a configuracao inicial do IC20
 void initConfigIC20(){
-    ic_con = (int *) (I2C0_virtual + 0x0);
-    ic_tar = (int *) (I2C0_virtual + 0x4);
-    ic_fs_scl_hcnt = (int *) (I2C0_virtual + 0x1C);
-    ic_fs_scl_lcnt = (int *) (I2C0_virtual + 0x20);
-    ic_enable = (int *) (I2C0_virtual + 0x6C);
-    ic_enable_status = (int *) (I2C0_virtual + 0x9C);
-    ic_data_cmd = (int *) (I2C0_virtual + 0x10);
-    ic_rxflr = (int *) (I2C0_virtual + 0x78);
+ ic_con = (int *) (I2C0_virtual + 0x0);
+ ic_tar = (int *) (I2C0_virtual + 0x4);
+ ic_fs_scl_hcnt = (int *) (I2C0_virtual + 0x1C);
+ ic_fs_scl_lcnt = (int *) (I2C0_virtual + 0x20);
+ ic_enable = (int *) (I2C0_virtual + 0x6C);
+ ic_enable_status = (int *) (I2C0_virtual + 0x9C);
+ ic_data_cmd = (int *) (I2C0_virtual + 0x10);
+ ic_rxflr = (int *) (I2C0_virtual + 0x78);
 
-    *ic_enable = 2;
+ *ic_enable = 2;
 
-    while(((*ic_enable_status)&0x1) == 1){}
+ while(((*ic_enable_status)&0x1) == 1){}
 
-    *ic_con = 0x65;
-    *ic_tar = 0x53;
-    *ic_fs_scl_hcnt = 90;
-    *ic_fs_scl_lcnt = 160;
-    *ic_enable = 1;
+ *ic_con = 0x65;
+ *ic_tar = 0x53;
+ *ic_fs_scl_hcnt = 90;
+ *ic_fs_scl_lcnt = 160;
+ *ic_enable = 1;
 
-    while(((*ic_enable_status)&0x1) == 0){}
+ while(((*ic_enable_status)&0x1) == 0){}
 }
 
 bool ADXL345_IsDataReady(){
-    bool bReady = false;
-    uint8_t data8;
-    
-    ADXL345_REG_READ(ADXL345_REG_INT_SOURCE,&data8);
-    if (data8 & XL345_DATAREADY)
-    bReady = true;
-    
-    return bReady;
+ bool bReady = false;
+ uint8_t data8;
+ 
+ ADXL345_REG_READ(ADXL345_REG_INT_SOURCE,&data8);
+ if (data8 & XL345_DATAREADY)
+ bReady = true;
+ 
+ return bReady;
 }
 
+//calibra os valores do acelerometro
 void ADXL345_Calibrate(){
  
-    int average_x = 0;
-    int average_y = 0;
-    int average_z = 0;
-    int16_t XYZ[3];
-    int8_t offset_x;
-    int8_t offset_y;
-    int8_t offset_z;
-    
-    // stop measure
-    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
-    
-    // Get current offsets
-    ADXL345_REG_READ(ADXL345_REG_OFSX, (uint8_t *)&offset_x);
-    ADXL345_REG_READ(ADXL345_REG_OFSY, (uint8_t *)&offset_y);
-    ADXL345_REG_READ(ADXL345_REG_OFSZ, (uint8_t *)&offset_z);
-    
-    // Use 100 hz rate for calibration. Save the current rate.
-    uint8_t saved_bw;
-    ADXL345_REG_READ(ADXL345_REG_BW_RATE, &saved_bw);
-    ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, XL345_RATE_100);
-    
-    // Use 16g range, full resolution. Save the current format.
-    uint8_t saved_dataformat;
-    ADXL345_REG_READ(ADXL345_REG_DATA_FORMAT, &saved_dataformat);
-    ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
-    
-    // start measure
-    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
-    
-    // Get the average x,y,z accelerations over 32 samples (LSB 3.9 mg)
-    int i = 0;
-    while (i < 32){
-        // Note: use DATA_READY here, can't use ACTIVITY because board is stationary.
-        if (ADXL345_IsDataReady()){
-            ADXL345_XYZ_Read(XYZ);
-            average_x += XYZ[0];
-            average_y += XYZ[1];
-            average_z += XYZ[2];
-            i++;
-        }
-    }
+ int average_x = 0;
+ int average_y = 0;
+ int average_z = 0;
+ int16_t XYZ[3];
+ int8_t offset_x;
+ int8_t offset_y;
+ int8_t offset_z;
+ 
+ // stop measure
+ ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
+ 
+ // Get current offsets
+ ADXL345_REG_READ(ADXL345_REG_OFSX, (uint8_t *)&offset_x);
+ ADXL345_REG_READ(ADXL345_REG_OFSY, (uint8_t *)&offset_y);
+ ADXL345_REG_READ(ADXL345_REG_OFSZ, (uint8_t *)&offset_z);
+ 
+ // Use 100 hz rate for calibration. Save the current rate.
+ uint8_t saved_bw;
+ ADXL345_REG_READ(ADXL345_REG_BW_RATE, &saved_bw);
+ ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, XL345_RATE_100);
+ 
+ // Use 16g range, full resolution. Save the current format.
+ uint8_t saved_dataformat;
+ ADXL345_REG_READ(ADXL345_REG_DATA_FORMAT, &saved_dataformat);
+ ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
+ 
+ // start measure
+ ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
+ 
+ // Get the average x,y,z accelerations over 32 samples (LSB 3.9 mg)
+ int i = 0;
+ while (i < 32){
+ // Note: use DATA_READY here, can't use ACTIVITY because board is stationary.
+ if (ADXL345_IsDataReady()){
+ ADXL345_XYZ_Read(XYZ);
+ average_x += XYZ[0];
+ average_y += XYZ[1];
+ average_z += XYZ[2];
+ i++;
+ }
+ }
 
-    average_x = ROUNDED_DIVISION(average_x, 32);
-    average_y = ROUNDED_DIVISION(average_y, 32);
-    average_z = ROUNDED_DIVISION(average_z, 32);
-    
-    // stop measure
-    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY); 
-    
-    // Calculate the offsets (LSB 15.6 mg)
-    offset_x += ROUNDED_DIVISION(0-average_x, 4);
-    offset_y += ROUNDED_DIVISION(0-average_y, 4);
-    offset_z += ROUNDED_DIVISION(256-average_z, 4);
-    
-    // Set the offset registers
-    ADXL345_REG_WRITE(ADXL345_REG_OFSX, offset_x);
-    ADXL345_REG_WRITE(ADXL345_REG_OFSY, offset_y);
-    ADXL345_REG_WRITE(ADXL345_REG_OFSZ, offset_z);
-    
-    // Restore original bw rate
-    ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, saved_bw);
-    
-    // Restore original data format
-    ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, saved_dataformat);
-    
-    // start measure
-    ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
+ average_x = ROUNDED_DIVISION(average_x, 32);
+ average_y = ROUNDED_DIVISION(average_y, 32);
+ average_z = ROUNDED_DIVISION(average_z, 32);
+ 
+ // stop measure
+ ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY); 
+ 
+ // Calculate the offsets (LSB 15.6 mg)
+ offset_x += ROUNDED_DIVISION(0-average_x, 4);
+ offset_y += ROUNDED_DIVISION(0-average_y, 4);
+ offset_z += ROUNDED_DIVISION(256-average_z, 4);
+ 
+ // Set the offset registers
+ ADXL345_REG_WRITE(ADXL345_REG_OFSX, offset_x);
+ ADXL345_REG_WRITE(ADXL345_REG_OFSY, offset_y);
+ ADXL345_REG_WRITE(ADXL345_REG_OFSZ, offset_z);
+ 
+ // Restore original bw rate
+ ADXL345_REG_WRITE(ADXL345_REG_BW_RATE, saved_bw);
+ 
+ // Restore original data format
+ ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, saved_dataformat);
+ 
+ // start measure
+ ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_MEASURE);
 }
 
 
 //Cria o tabuleiro do jogo
 void initBoard() {
-    for (int i = 0; i < BOARD_HEIGHT; i++) {
-        for (int j = 0; j < BOARD_WIDTH; j++) {
-            board[i][j] = 0;
-        }
+ for (int i = 0; i < BOARD_HEIGHT; i++) {
+ for (int j = 0; j < BOARD_WIDTH; j++) {
+ board[i][j] = 0;
+ }
+ }
+}
+    
+
+// Desenhar uma linha vertical
+void draw_vertical(int pos, int color, int tamanho) {
+ for (int i = 0; i < tamanho; i++){
+ draw_box(pos + i*160, color);
+ }
+}
+
+// Desenhar uma linha horizontal
+void draw_horizontal(int pos, int color, int tamanho) {
+ for (int i = 0; i < tamanho; i++){
+ draw_box(pos + i*2, color);
+ }
+}
+
+// Desenhar uma linha fina vertical
+void draw_vertical_text(int pos, int color, int tamanho) {
+    for (int i = 0; i < tamanho; i++){
+        draw_text(pos + i*80, color);
     }
 }
 
-void draw_box_with_shadow(int x1, int y1, int x2, int y2, int color, int shadow_color) {
-    // Desenhar a sombra (deslocada para a direita e para baixo)
-    video_box(x1 + 2, y1 + 2, x2 + 2, y2 + 2, shadow_color); // Sombra
-
-    // Desenhar a caixa principal
-    video_box(x1, y1, x2, y2, color); // Parte principal
+// Desenhar uma linha fina horizontal
+void draw_horizontal_text(int pos, int color, int tamanho) {
+    for (int i = 0; i < tamanho; i++){
+        draw_text(pos + i, color);
+    }
 }
 
+int* ler_pontos(int pontos, int* tamanho_array) {
+    // Se o número for negativo, converte para positivo
+    if (pontos < 0) {
+        pontos = -pontos;
+    }
+
+    // Calcula o número de dígitos
+    int temp = pontos;
+    int digitos = 0;
+    while (temp > 0) {
+        temp /= 10;
+        digitos++;
+    }
+
+    // Se o número for zero, então há 1 dígito (o próprio zero)
+    if (pontos == 0) {
+        digitos = 1;
+    }
+
+    // Aloca o vetor para armazenar os dígitos
+    int* digitos_array = (int*)malloc(digitos * sizeof(int));
+
+    // Preenche o vetor com os dígitos
+    for (int i = 0; i < digitos; i++) {
+        digitos_array[i] = pontos % 10;  // Extrai o dígito da unidade
+        pontos /= 10;  // Remove o último dígito
+    }
+
+    // Reverte o vetor para ter a ordem correta (do primeiro para o último dígito)
+    for (int i = 0; i < digitos / 2; i++) {
+        int temp = digitos_array[i];
+        digitos_array[i] = digitos_array[digitos - i - 1];
+        digitos_array[digitos - i - 1] = temp;
+    }
+
+    *tamanho_array = digitos;  // Define o tamanho do array
+    return digitos_array;  // Retorna o vetor de dígitos
+}
+
+
+//Funcao que recebe posicao e o numero especificado e o desenha
+void desenhar_number(int posicao, int numero){
+    switch (numero){
+
+        case 0:
+            //Desenha o 0 (ajustar posição)
+            draw_text(posicao + 1, 0b111111111);
+            draw_vertical_text(posicao + 80, 0b111111111, 3);
+            draw_vertical_text(posicao + 82, 0b111111111, 3);
+            draw_text(posicao + 321, 0b111111111);
+            break;
+
+        case 1:
+
+            //Desenha o 1 (ajustar posição)
+            draw_vertical_text(posicao + 1, 0b111111111, 5);
+            draw_text(posicao + 80  , 0b111111111);
+            break;
+
+        case 2:
+
+            //Desenha o 2 (ajustar posição)
+            draw_text(posicao + 80, 0b111111111);
+            draw_text(posicao + 1, 0b111111111);
+            draw_text(posicao + 82, 0b111111111);
+            draw_text(posicao + 161, 0b111111111);
+            draw_text(posicao + 240, 0b111111111);
+            draw_horizontal_text(posicao + 320, 0b111111111, 3);
+            break;
+
+        case 3:
+
+            //Deseha o 3 (ajustar posição)
+            draw_text(posicao, 0b111111111);
+            draw_text(posicao + 1, 0b111111111);
+            draw_text(posicao + 82, 0b111111111);
+            draw_text(posicao + 161, 0b111111111);
+            draw_text(posicao + 320, 0b111111111);
+            draw_text(posicao + 321, 0b111111111);
+            draw_text(posicao + 242, 0b111111111); 
+            break;
+
+        case 4:
+
+            //Desenha o 4 (ajustar posição)
+            draw_vertical_text(posicao, 0b111111111, 3);
+            draw_text(posicao + 161, 0b111111111);
+            draw_vertical_text(posicao + 2, 0b111111111, 5);
+            break;
+
+        case 5:
+            //Desenha o 5 (ajustar posição)
+            draw_horizontal_text(posicao, 0b111111111, 3);
+            draw_horizontal_text(posicao + 80, 0b111111111, 1);
+            draw_horizontal_text(posicao + 160, 0b111111111, 3);
+            draw_horizontal_text(posicao + 242, 0b111111111, 1);
+            draw_horizontal_text(posicao + 320, 0b111111111, 3);
+            break;
+
+        case 6:
+            //Desenha o 6 (ajustar posição)
+            draw_horizontal_text(posicao, 0b111111111, 2);
+            draw_vertical_text(posicao - 1, 0b111111111, 5);
+            draw_horizontal_text(posicao + 320, 0b111111111, 2);
+            draw_vertical_text(posicao + 161, 0b111111111, 2);
+            draw_text(posicao + 160, 0b111111111);
+            break;
+
+        case 7:
+
+            //Desenha o 7 inclinado 
+            draw_horizontal_text(posicao, 0b111111111, 3);
+            draw_vertical_text(posicao + 82, 0b111111111, 4);
+            break;
+
+        case 8:
+
+            //Desenha o 8
+            draw_horizontal_text(posicao, 0b111111111, 3);
+            draw_vertical_text(posicao + 80, 0b111111111, 3);
+            draw_text(posicao + 161, 0b111111111);
+            draw_vertical_text(posicao + 82, 0b111111111, 3);
+            draw_horizontal_text(posicao + 320, 0b111111111, 3);
+            break;
+        
+        case 9:
+
+            //Desenha o 9
+            draw_horizontal_text(posicao, 0b111111111, 3);
+            draw_text(posicao + 80, 0b111111111);
+            draw_horizontal_text(posicao + 160, 0b111111111, 2);
+            draw_vertical_text(posicao + 2, 0b111111111, 5);
+            break;
+
+        default:
+            break;    
+    }
+
+}
 // Função que desenha todas as letras de "Tetris" com sombra e cores diferentes
 void draw_menu() {
-    // Definir a cor da sombra (Cinza escuro)
-    int shadow_color = 0x202020;
-
-    draw_box_with_shadow(10, 20, 50, 30, video_GREEN, shadow_color); // Parte superior
-    draw_box_with_shadow(25, 30, 35, 70, video_GREEN, shadow_color); // Parte vertical
+    // Desenhar a letra T
+    draw_horizontal(565, 0b110110110, 5);
+    draw_vertical(729, 0b110110110, 4);
 
     // Desenhar a letra E (Verde)
-    int color_E = 0x00FF00; // Cor Verde
-    draw_box_with_shadow(60, 20, 100, 30, video_WHITE, shadow_color); // Parte superior
-    draw_box_with_shadow(60, 40, 90, 50, video_WHITE, shadow_color); // Parte do meio
-    draw_box_with_shadow(60, 60, 100, 70, video_WHITE, shadow_color); // Parte inferior
-    draw_box_with_shadow(60, 30, 70, 70, video_WHITE, shadow_color); // Parte vertical
+    draw_vertical(577, 0b001101010, 5);
+    draw_horizontal(579, 0b001101010, 4);
+    draw_horizontal(899, 0b001101010, 3);
+    draw_horizontal(1219, 0b001101010, 4);
 
     // Desenhar a letra T (segunda vez - Azul)
-    // Cor Azul
-    draw_box_with_shadow(110, 20, 150, 30, video_GREEN, shadow_color); // Parte superior
-    draw_box_with_shadow(125, 30, 135, 70, video_GREEN, shadow_color); // Parte vertical
+    draw_horizontal(589, 0b101011001, 5);
+    draw_vertical(753, 0b101011001, 4);
 
     // Desenhar a letra R (Amarelo)
-    int color_R = 0xFFFF00; // Cor Amarela
-    draw_box_with_shadow(160, 20, 200, 30, video_GREY, shadow_color); // Parte superior
-    draw_box_with_shadow(160, 30, 170, 70, video_GREY, shadow_color); // Parte vertical
-    draw_box_with_shadow(170, 40, 200, 50, video_GREY, shadow_color); // Parte intermediária
-    draw_box_with_shadow(190, 20, 200, 40, video_GREY, shadow_color); // Curva do R
-    draw_box_with_shadow(190, 50, 200, 70, video_GREY, shadow_color); // Perna do R
+    draw_vertical(601, 0b001110111, 5);
+    draw_horizontal(603, 0b001110111, 2);
+    draw_box(767, 0b001110111);
+    draw_horizontal(923, 0b001110111, 2);
+    draw_box(1087, 0b001110111);
+    draw_box(1247, 0b001110111);
 
-    // Desenhar a letra I (Ciano)
-    int color_I = 0x00FFFF; // Cor Ciano
-    draw_box_with_shadow(210, 20, 250, 30, video_GREEN, shadow_color); // Parte superior
-    draw_box_with_shadow(225, 30, 235, 70, video_GREEN, shadow_color); // Parte vertical
-    draw_box_with_shadow(210, 60, 250, 70, video_GREEN, shadow_color); // Parte inferior
+    // Desenha a letra I
+    draw_horizontal(611, 0b101101001, 5);
+    draw_vertical(695, 0b101101001, 4);
+    draw_horizontal(1251, 0b101101001, 5);
 
-    // Desenhar a letra S (Magenta)
-    int color_S = 0xFF00FF; // Cor Magenta
-    draw_box_with_shadow(260, 20, 300, 30, video_WHITE, shadow_color); // Parte superior
-    draw_box_with_shadow(260, 30, 270, 50, video_WHITE, shadow_color); // Parte esquerda superior
-    draw_box_with_shadow(270, 40, 300, 50, video_WHITE, shadow_color); // Parte intermediária
-    draw_box_with_shadow(290, 50, 300, 70, video_WHITE, shadow_color); // Parte direita inferior
-    draw_box_with_shadow(260, 60, 300, 70, video_WHITE, shadow_color); // Parte inferior
+    // Desenha a letra S
+    draw_horizontal(625, 0b001010111, 4);
+    draw_box(783, 0b001010111);
+    draw_horizontal(945, 0b001010111, 3);
+    draw_box(1111, 0b001010111);
+    draw_horizontal(1263, 0b001010111, 4);
 }
 
+// Função principal que exibe na tela as paginas do jogo
 void drawBoard(){
- 
-    if(video_open() == 1){
 
+    //a variavel menu faz o controle para checar se o usuario esta no menu do jogo ou se esta jogando
     if( menu == 1 ){
-        video_clear();
+        //limpar_tela();
         draw_menu();
 
         char hscr_msg[50] = "HIGHSCORE: ";
@@ -428,29 +598,137 @@ void drawBoard(){
         fflush(stdin);
         sprintf(scrStr3, "%d", hscr[2]);
         fflush(stdin);
-
+        scr = 0;
         if(opt == 0){
-            video_text(35,26,">JOGAR");
-            video_text(35,28,"SAIR");
+            //draw_text(2502, 0b111111111); // Seletor em Jogar
 
-            video_text(35,33,hscr_msg);
-            video_text(35,35,strcat(hscr1_msg,scrStr1));
-            video_text(35,37,strcat(hscr2_msg,scrStr2));
-            video_text(35,39,strcat(hscr3_msg,scrStr3));
+            // Desenha a palavra Jogar
+            // Desenha a letra J
+            draw_vertical_text(2588, 0b010111000, 2);
+            draw_horizontal_text(2669, 0b010111000, 2);
+            draw_vertical_text(2350, 0b010111000, 4);
+
+            // Desenha a letra O
+            draw_horizontal_text(2352, 0b010111000, 3);
+            draw_vertical_text(2432, 0b010111000, 3);
+            draw_vertical_text(2434, 0b010111000, 3);
+            draw_horizontal_text(2672, 0b010111000, 3);
+
+            // Desenha a letra G
+            draw_horizontal_text(2356, 0b010111000, 3);
+            draw_vertical_text(2436, 0b010111000, 3);
+            draw_horizontal_text(2676, 0b010111000, 3);
+            draw_text(2598, 0b010111000);
+
+            // Desenha a letra A
+            draw_horizontal_text(2360, 0b010111000, 3);
+            draw_vertical_text(2440, 0b010111000, 4);
+            draw_vertical_text(2442, 0b010111000, 4);
+            draw_text(2521, 0b010111000);
+
+            // Desenha a letra R
+            draw_horizontal_text(2364, 0b010111000, 2);
+            draw_vertical_text(2444, 0b010111000, 4);
+            draw_text(2446, 0b010111000);
+            draw_text(2525, 0b010111000);
+            draw_vertical_text(2606, 0b010111000, 2);
+
+            // Desenhar a palavra Sair
+            // Desenha a letra S
+            draw_horizontal_text(2909, 0b111111111, 2);
+            draw_text(2988, 0b111111111);
+            draw_horizontal_text(3068, 0b111111111, 3);
+            draw_text(3150, 0b111111111);
+            draw_horizontal_text(3228, 0b111111111, 2);
+
+            // Desenha a letra A
+            draw_horizontal_text(2912, 0b111111111, 3);
+            draw_vertical_text(2992, 0b111111111, 4);
+            draw_vertical_text(2994, 0b111111111, 4);
+            draw_text(3073, 0b111111111);
+
+            // Desenha a letra I
+            draw_horizontal_text(2916, 0b111111111, 3);
+            draw_vertical_text(2997, 0b111111111, 3);
+            draw_horizontal_text(3236, 0b111111111, 3);
+
+            // Desenha a letra R
+            draw_horizontal_text(2920, 0b111111111, 2);
+            draw_vertical_text(3000, 0b111111111, 4);
+            draw_text(3002, 0b111111111);
+            draw_text(3081, 0b111111111);
+            draw_vertical_text(3162, 0b111111111, 2);
+
         } else if(opt == 1){
-            video_text(35,26,"JOGAR");
-            video_text(35,28,">SAIR");
+            //draw_text(3062, 0b111111111); // Seletor em Sair
 
-            video_text(35,33,hscr_msg);
-            video_text(35,35,strcat(hscr1_msg,scrStr1));
-            video_text(35,37,strcat(hscr2_msg,scrStr2));
-            video_text(35,39,strcat(hscr3_msg,scrStr3));
+            // Desenha a palavra Jogar
+            // Desenha a letra J
+            draw_vertical_text(2588, 0b111111111, 2);
+            draw_horizontal_text(2669, 0b111111111, 2);
+            draw_vertical_text(2350, 0b111111111, 4);
+
+            // Desenha a letra O
+            draw_horizontal_text(2352, 0b111111111, 3);
+            draw_vertical_text(2432, 0b111111111, 3);
+            draw_vertical_text(2434, 0b111111111, 3);
+            draw_horizontal_text(2672, 0b111111111, 3);
+
+            // Desenha a letra G
+            draw_horizontal_text(2356, 0b111111111, 3);
+            draw_vertical_text(2436, 0b111111111, 3);
+            draw_horizontal_text(2676, 0b111111111, 3);
+            draw_text(2598, 0b111111111);
+
+            // Desenha a letra A
+            draw_horizontal_text(2360, 0b111111111, 3);
+            draw_vertical_text(2440, 0b111111111, 4);
+            draw_vertical_text(2442, 0b111111111, 4);
+            draw_text(2521, 0b111111111);
+
+            // Desenha a letra R
+            draw_horizontal_text(2364, 0b111111111, 2);
+            draw_vertical_text(2444, 0b111111111, 4);
+            draw_text(2446, 0b111111111);
+            draw_text(2525, 0b111111111);
+            draw_vertical_text(2606, 0b111111111, 2);
+
+            // Desenhar a palavra Sair
+            // Desenha a letra S
+            draw_horizontal_text(2909, 0b010111000, 2);
+            draw_text(2988, 0b010111000);
+            draw_horizontal_text(3068, 0b010111000, 3);
+            draw_text(3150, 0b010111000);
+            draw_horizontal_text(3228, 0b010111000, 2);
+
+            // Desenha a letra A
+            draw_horizontal_text(2912, 0b010111000, 3);
+            draw_vertical_text(2992, 0b010111000, 4);
+            draw_vertical_text(2994, 0b010111000, 4);
+            draw_text(3073, 0b010111000);
+
+            // Desenha a letra I
+            draw_horizontal_text(2916, 0b010111000, 3);
+            draw_vertical_text(2997, 0b010111000, 3);
+            draw_horizontal_text(3236, 0b010111000, 3);
+
+            // Desenha a letra R
+            draw_horizontal_text(2920, 0b010111000, 2);
+            draw_vertical_text(3000, 0b010111000, 4);
+            draw_text(3002, 0b010111000);
+            draw_text(3081, 0b010111000);
+            draw_vertical_text(3162, 0b010111000, 2);
+
         }
-    
+
     }else{
-        
-        video_clear();
-        video_box(80,10,210,239,video_WHITE);
+
+        //limpar_tela();
+        // Desenhando as bordas do jogo
+        draw_vertical(748, 0b111111111, 20);
+        draw_horizontal(3948, 0b111111111, 12);
+        draw_vertical(770, 0b111111111, 20);
+        ////video_box(80,10,210,239,video_WHITE);
         char scr_msg[50] = "SCORE: ";
         char hscr_msg[50] = "HIGHSCORE: ";
         char hscr1_msg[50] = "1- ";
@@ -464,96 +742,298 @@ void drawBoard(){
         sprintf(scrStr3, "%d", hscr[2]);
         fflush(stdin);
         sprintf(scrStr, "%d", scr);
-        video_text(55,5,strcat(scr_msg,scrStr));
-        video_text(55,10,hscr_msg);
-        video_text(55,12,strcat(hscr1_msg,scrStr1));
-        video_text(55,14,strcat(hscr2_msg,scrStr2));
-        video_text(55,16,strcat(hscr3_msg,scrStr3));
-        //video_text(62,5,scrStr);
 
+        int tamanho_array_hscr1;
+        int* digitos_hscr1 = ler_pontos(hscr[0], &tamanho_array_hscr1);  // Lê os pontos e define o tamanho do array
+
+        int tamanho_array_hscr2;
+        int* digitos_hscr2 = ler_pontos(hscr[1], &tamanho_array_hscr2);  // Lê os pontos e define o tamanho do array
+
+        int tamanho_array_hscr3;
+        int* digitos_hscr3 = ler_pontos(hscr[2], &tamanho_array_hscr3);  // Lê os pontos e define o tamanho do array
+
+        //desenhar a letra H
+        draw_vertical_text(728, 0b111111111, 5);
+        draw_text(889, 0b111111111);
+        draw_vertical_text(730, 0b111111111, 5);
+        // Desenha a letra S
+        draw_horizontal_text(733, 0b111111111, 2);
+        draw_text(812, 0b111111111);
+        draw_horizontal_text(892, 0b111111111, 3);
+        draw_text(974, 0b111111111);
+        draw_horizontal_text(1052, 0b111111111, 2);
+
+        // Desenha o ponto
+        draw_text(1056, 0b111111111);
+
+        //Desenha o 1
+        draw_vertical_text(1283, 0b111111111, 5);
+        draw_text(1362  , 0b111111111);
+
+        //hifen
+        draw_horizontal_text(1446, 0b111111111, 2);
+
+        //Desenha o highscore 1
+        int pos_hscr1 = 1290;
+        for (int i = 0; i < tamanho_array_hscr1; i++) {
+            desenhar_number(pos_hscr1, digitos_hscr1[i]);
+            pos_hscr1 += 4;
+        }
+
+        // Liberar a memória alocada para o array
+        free(digitos_hscr1);
+
+        //Desenha o 2
+        draw_text(1842, 0b111111111);
+        draw_text(1763, 0b111111111);
+        draw_text(1844, 0b111111111);
+        draw_text(1923, 0b111111111);
+        draw_text(2002, 0b111111111);
+        draw_horizontal_text(2082, 0b111111111, 3);
+        
+        //hifen
+        draw_horizontal_text(1926, 0b111111111, 2);
+
+
+        //Desenha o highscore 2
+        int pos_hscr2 = 1770;
+        for (int i = 0; i < tamanho_array_hscr2; i++) {
+            desenhar_number(pos_hscr2, digitos_hscr2[i]);
+            pos_hscr2 += 4;
+        }
+
+        // Liberar a memória alocada para o array
+        free(digitos_hscr2);
+
+
+        //Deseha o 3
+        draw_text(2242, 0b111111111);
+        draw_text(2243, 0b111111111);
+        draw_text(2324, 0b111111111);
+        draw_text(2403, 0b111111111);
+        draw_text(2562, 0b111111111);
+        draw_text(2563, 0b111111111);
+        draw_text(2484, 0b111111111);
+
+        //hifen
+        draw_horizontal_text(2406, 0b111111111, 2);
+
+        //Desenha o highscore 3
+        int pos_hscr3 = 2250;
+        for (int i = 0; i < tamanho_array_hscr3; i++) {
+            desenhar_number(pos_hscr3, digitos_hscr3[i]);
+            pos_hscr3 += 4;
+        }
+
+        // Liberar a memória alocada para o array
+        free(digitos_hscr3);
+
+        //Desenha o P
+        draw_vertical_text(775, 0b111111111, 5);
+        draw_text(776, 0b111111111);
+        draw_text(857, 0b111111111);
+        draw_text(936, 0b111111111);
+
+        //Desenha o T
+        draw_horizontal_text(779, 0b111111111, 3);
+        draw_vertical_text(860, 0b111111111, 4);
+
+        //Desenha o S
+        draw_horizontal_text(784, 0b111111111, 2);
+        draw_text(863, 0b111111111);
+        draw_horizontal_text(943, 0b111111111, 3);
+        draw_text(1025, 0b111111111);
+        draw_horizontal_text(1103, 0b111111111, 2);
+
+        //Desenha a quantidade atual de pontos
+
+        int tamanho_array_pts;
+        int* digitos_scr = ler_pontos(scr, &tamanho_array_pts);  // Lê os pontos e define o tamanho do array
+
+        int pos_pts = 1336;
+        for (int i = 0; i < tamanho_array_pts; i++) {
+            desenhar_number(pos_pts, digitos_scr[i]);
+            pos_pts += 4;
+        }
+
+        // Liberar a memória alocada para o array
+        free(digitos_scr);
+
+        
+        //loop for que desenha a matriz do jogo (peças ja caidas e espaços vazios)
         for (int i = 0; i < BOARD_HEIGHT; i++) {
             for (int j = 0; j < BOARD_WIDTH; j++) {
                 if (board[i][j] == 1) {
-                    video_box(j*11 + 90,i*11 + 10,j*11 + 100,i*11 + 20,video_GREY);
+                    draw_box(750+(j*2)+(i*160), 0b101101101);
                 } else {
-                    video_box(j*11 + 90,i*11 + 10,j*11 + 100,i*11 + 20,video_BLACK);
+                    draw_box(750+(j*2)+(i*160), 0b000000000);
                 } 
             } 
         }
 
 
-        // Draw the current piece
+        // Desenha a peça atual
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 if (shapes[currentShape][currentRotation][i][j] == 1) {
-                    video_box((currentX + j)*11 + 90,(currentY + i)*11 + 10,(currentX + j)*11 + 100,(currentY + i)*11 + 20,video_GREEN);
+                    draw_box(750+(currentX + j)*2 + (currentY + i) * 160, 0b000111000);
                 }
             }
         }
 
+        // If que checa se o jogo esta em pause
         if(pause2 == 1){
+            // If que checa a opção a ser inserida no menu de pausa e muda o indicador (>)
             if(opt == 0){
-                video_box(110,50,180,150,video_WHITE);
-                video_box(115,55,175,145,video_BLACK);
-                video_text(30,16,"Jogo pausado");
-                video_text(30,20,">Continuar");
-                video_text(30,24,"Sair");
+                draw_vertical(750, 0b000000000, 20);
+                draw_vertical(752, 0b000000000, 20);
+                draw_vertical(754, 0b000000000, 20);
+                draw_vertical(756, 0b000000000, 20);
+                draw_vertical(758, 0b000000000, 20);
+                draw_vertical(760, 0b000000000, 20);
+                draw_vertical(762, 0b000000000, 20);
+                draw_vertical(764, 0b000000000, 20);
+                draw_vertical(766, 0b000000000, 20);
+                draw_vertical(768, 0b000000000, 20);
+
+                // Desenhando símbolo de play
+                draw_vertical_text(2353, 0b010111000, 7);
+                draw_text(2434, 0b010111000);
+                draw_text(2515, 0b010111000);
+                draw_text(2596, 0b010111000);
+                draw_text(2675, 0b010111000);
+                draw_text(2754, 0b010111000);
+
+                // Desenhando X
+                draw_text(2440, 0b111111111);
+                draw_text(2521, 0b111111111);
+                draw_text(2602, 0b111111111);
+                draw_text(2681, 0b111111111);
+                draw_text(2760, 0b111111111);
+                draw_text(2683, 0b111111111);
+                draw_text(2764, 0b111111111);
+                draw_text(2523, 0b111111111);
+                draw_text(2444, 0b111111111);
+
             } else if(opt == 1){
-                video_box(110,50,180,150,video_WHITE);
-                video_box(115,55,175,145,video_BLACK);
-                video_text(30,16,"Jogo pausado");
-                video_text(30,20,"Continuar");
-                video_text(30,24,">Sair");
+                draw_vertical(750, 0b000000000, 20);
+                draw_vertical(752, 0b000000000, 20);
+                draw_vertical(754, 0b000000000, 20);
+                draw_vertical(756, 0b000000000, 20);
+                draw_vertical(758, 0b000000000, 20);
+                draw_vertical(760, 0b000000000, 20);
+                draw_vertical(762, 0b000000000, 20);
+                draw_vertical(764, 0b000000000, 20);
+                draw_vertical(766, 0b000000000, 20);
+                draw_vertical(768, 0b000000000, 20);
+
+                // Desenhando símbolo de play
+                draw_vertical_text(2353, 0b111111111, 7);
+                draw_text(2434, 0b111111111);
+                draw_text(2515, 0b111111111);
+                draw_text(2596, 0b111111111);
+                draw_text(2675, 0b111111111);
+                draw_text(2754, 0b111111111);
+
+                // Desenhando X
+                draw_text(2440, 0b000000111);
+                draw_text(2521, 0b000000111);
+                draw_text(2602, 0b000000111);
+                draw_text(2681, 0b000000111);
+                draw_text(2760, 0b000000111);
+                draw_text(2683, 0b000000111);
+                draw_text(2764, 0b000000111);
+                draw_text(2523, 0b000000111);
+                draw_text(2444, 0b000000111);
+
             }
         }
 
+        //Jogando = 2 significa que o jogador perdeu
         if(jogando == 2){
-            video_box(110,50,180,90,video_WHITE);
-            video_box(115,55,175,85,video_BLACK);
-            video_text(30,16,"Você perdeu");
-            video_text(30,20,">OK");
+            // Escrever Game Over
+            // Desenha a letra G
+            draw_horizontal_text(2352, 0b000000111, 3);
+            draw_vertical_text(2432, 0b000000111, 3);
+            draw_horizontal_text(2672, 0b000000111, 3);
+            draw_text(2594, 0b000000111);
+
+            // Desenha a letra A
+            draw_horizontal_text(2356, 0b000000111, 3);
+            draw_vertical_text(2436, 0b000000111, 4);
+            draw_vertical_text(2438, 0b000000111, 4);
+            draw_text(2517, 0b000000111);
+
+            // Desenha a letra M
+            draw_vertical_text(2360, 0b000000111, 5);
+            draw_text(2441, 0b000000111);
+            draw_vertical_text(2362, 0b000000111, 5);
+
+            // Desenha a letra E
+            draw_vertical_text(2364, 0b000000111, 5);
+            draw_horizontal_text(2365, 0b000000111, 2);
+            draw_horizontal_text(2525, 0b000000111, 2);
+            draw_horizontal_text(2685, 0b000000111, 2);
+
+            // Desenha a letra O
+            draw_horizontal_text(2832, 0b000000111, 3);
+            draw_vertical_text(2912, 0b000000111, 3);
+            draw_vertical_text(2914, 0b000000111, 3);
+            draw_horizontal_text(3152, 0b000000111, 3);
+
+            // Desenha a letra V
+            draw_vertical_text(2836, 0b000000111, 4);
+            draw_text(3157, 0b000000111);
+            draw_vertical_text(2838, 0b000000111, 4);
+
+            // Desenha a letra E
+            draw_vertical_text(2840, 0b000000111, 5);
+            draw_horizontal_text(2841, 0b000000111, 2);
+            draw_horizontal_text(3001, 0b000000111, 2);
+            draw_horizontal_text(3161, 0b000000111, 2);
+
+            // Desenha a letra R
+            draw_horizontal_text(2844, 0b000000111, 2);
+            draw_vertical_text(2924, 0b000000111, 4);
+            draw_vertical_text(2926, 0b000000111, 1);
+            draw_vertical_text(3005, 0b000000111, 1);
+            draw_vertical_text(3086, 0b000000111, 2);
+
+            // Desenhar botão de voltar
+            draw_horizontal_text(4310, 0b000000111, 3);
+            draw_vertical_text(4393, 0b000000111, 2);
+            draw_horizontal_text(4546, 0b000000111, 7);
+            draw_text(4467, 0b000000111);
+            draw_text(4627, 0b000000111);
+            draw_text(4388, 0b000000111);
+            draw_text(4708, 0b000000111);
         } 
     }
 
-    video_show();
-    video_close();
-
-    } else {
-        printf("Erro no vga");
-    }
-
 }
 
-void limpaTela(){
-
-    if(video_open() == 1){
-        video_clear();
-        video_erase();
-        video_show();
-        video_close();
-    }
-}
-
+//Função que remove a linha caso totalmente preenchida e move as que estão acima dela uma unidade abaixo, ao final soma 100 ao score do jogdor
 void removeLine(int y) {
 
     for (int j = 0; j < BOARD_WIDTH; j++) {
         board[y][j] = 0;
     }
-    
+
     for (int i = y; i > 0; i--) {
-        for (int j = 0; j < BOARD_WIDTH; j++) {
-            board[i][j] = board[i - 1][j];
-        }   
+    for (int j = 0; j < BOARD_WIDTH; j++) {
+        board[i][j] = board[i - 1][j];
+        } 
     }
 
     for (int j = 0; j < BOARD_WIDTH; j++) {
         board[0][j] = 0;
     }
 
-    scr += 100;
- 
+    scr += 10;
+    limpar_tela();
 }
 
+//Checa se existem linhas preenchidas na matriz e as remove
 void checkLines() {
 
     for (int i = 0; i < BOARD_HEIGHT; i++) {
@@ -564,12 +1044,13 @@ void checkLines() {
                 break;
             }
         }
-        if (fullLine) {
-            removeLine(i);
-        }
+    if (fullLine) {
+        removeLine(i);
+    }
     }
 }
 
+//Função que "Encaixa" a peça na matriz do jogo, alterando o valor anterior de 0 (vazio) para 1 (bloco)
 void placeShape() {
 
     for (int i = 0; i < 4; i++) {
@@ -582,6 +1063,7 @@ void placeShape() {
     checkLines();
 }
 
+//Checa se houve colisao da peça atual com a matriz do jogo
 int checkCollision(int x, int y, int rotation) {
 
     for (int i = 0; i < 4; i++) {
@@ -599,6 +1081,7 @@ int checkCollision(int x, int y, int rotation) {
     return 0;
 }
 
+//Gera uma nova peça
 void newShape() {
     currentShape = rand() % 7;
     currentRotation = 0;
@@ -611,8 +1094,8 @@ void newShape() {
     }
 }
 
+//Função que faz o movimento para baixo da peça
 void moveDown() {
-
     if (!checkCollision(currentX, currentY + 1, currentRotation)) {
         currentY++;
     } else {
@@ -621,34 +1104,30 @@ void moveDown() {
     }
 }
 
+//Função para rotacionar a peça
 void rotateShape() {
-    int newRotation = (currentRotation + 1) % 4;
-    if (!checkCollision(currentX, currentY, newRotation)) {
-        currentRotation = newRotation;
-    }
+ int newRotation = (currentRotation + 1) % 4;
+ if (!checkCollision(currentX, currentY, newRotation)) {
+ currentRotation = newRotation;
+ }
 }
 
+//Função para movar a peça para a esquerda
 void moveLeft() {
     if (!checkCollision(currentX - 1, currentY, currentRotation)) {
         currentX--;
     }
 }
 
+//Função para movar a peça para a direita
 void moveRight() {
     if (!checkCollision(currentX + 1, currentY, currentRotation)) {
         currentX++;
     }
 }
 
-void setupNonBlockingInput() {
-    struct termios oldt, newt;
-    tcgetattr(STDIN_FILENO, &oldt);
-    newt = oldt;
-    newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-}
-
 int main() {
+    //mapeia a memoria do I2CO e o sysmgr
     I2C0_virtual = map_physical_memory(I2C0_BASE, I2C0_SPAN);
     sysmgr_virtual = map_physical_memory(SYSMGR_BASE, SYSMGR_SPAN);
 
@@ -660,168 +1139,192 @@ int main() {
 
     ADXL345_REG_READ(0x00, &devid);
 
+    //checa o endereco do device (acelerometro)
     if (devid == 0xE5){
-        ADXL345_Init();
-        srand(time(NULL));
-        setupNonBlockingInput();
-        limpaTela();
+    ADXL345_Init();
+    srand(time(NULL));
 
-        time_t lastFallTime = time(NULL);
+    time_t lastFallTime = time(NULL);
 
-        void *LW_virtual;
-        volatile int *edge_cap;
-        volatile int *button_ptr;
-
-        // Mapeia a memória
-        LW_virtual = map_physical_memory(LW_BRIDGE_BASE, LW_BRIDGE_SPAN);
-        if (LW_virtual == NULL) {
-            return -1;
+    // Mapeia a memória
+    mapm();
+    limpar_tela();
+    
+    int button_value = 0;
+    int hs_controller = 0;
+    while (1) {
+        int button = button_pressed();
+        if (button != 15) {
+            button_value = button;
         }
 
-        // Ponto de memória para os botões e o edge capture
-        button_ptr = (int *)(LW_virtual + KEY_BASE);
-        edge_cap = (int *)(LW_virtual + 0x5C); 
-        *edge_cap = 0xF;
-
-        while (1) {
-            int buttons_pressed = *edge_cap;
-            if(menu == 0 && jogando != 2){
+        //if checa se o jogador esta no jogo (menu == 0) e se não perdeu (jogando != 2)
+        if(menu == 0 && jogando != 2){
             jogando = 1;
-            if(pause2 == 0 && jogando == 1){
+        //if checa se o jogo não esta pausado (pause2 == 0) e se esta em jogo (jogando == 1)
+        if(pause2 == 0 && jogando == 1){
 
-                ADXL345_XYZ_Read(XYZ);
-                if(XYZ[0]*mg_per_lsb >= 150){
-                    moveRight();
-                    usleep(50000); 
-                }else if(XYZ[0]*mg_per_lsb <= -150){
-                    moveLeft();
-                    usleep(50000); 
-                }
-                if(XYZ[1]*mg_per_lsb <= -200){
-                    moveDown();
-                }
-                
-                if (buttons_pressed & BUTTON_0_MASK) {
-                    printf("Pausando...\n");
-                    pause2 = 1;
-                    *edge_cap = BUTTON_0_MASK; // Limpa a interrupção para o botão 0
-                }
-                if (buttons_pressed & BUTTON_1_MASK) {
-                    rotateShape();
-                    *edge_cap = BUTTON_1_MASK; // Limpa a interrupção para o botão 1
-                }
-
-                // Check for automatic falling
-                if (difftime(time(NULL), lastFallTime) >= FALL_DELAY / 1000000.0) {
-                    moveDown();
-                    lastFallTime = time(NULL);
-                }
-
-                
+            ADXL345_XYZ_Read(XYZ);
+            //checa se a placa foi inclinada a direita e move a peça
+            if(XYZ[0]*mg_per_lsb >= 150){
+                moveRight();
                 drawBoard();
                 usleep(50000); 
-            } else if(pause2 == 1 && jogando == 1){
+            //checa se a placa foi inclinada a esquerda e move a peça
+            }else if(XYZ[0]*mg_per_lsb <= -150){
+                moveLeft();
                 drawBoard();
-                
-                if (buttons_pressed & BUTTON_1_MASK) {
-                    opt = !opt;
-                    limpaTela();
-                    // Limpa a interrupção
-                    *edge_cap = BUTTON_1_MASK;
-                } 
-
-                if (buttons_pressed & BUTTON_0_MASK && opt == 0) {
-                    printf("Continuando...\n");
-                    pause2 = 0;
-                    limpaTela();
-                    // Limpa a interrupção
-                    *edge_cap = BUTTON_0_MASK;
-                } else if(buttons_pressed & BUTTON_0_MASK && opt == 1){
-                    menu = 1;
-                    jogando = 0;
-                    opt = 0;
-                    pause2 = 0;
-                    scr = 0;
-                    printf("saindo...\n");
-                    limpaTela();
-                    // Limpa a interrupção
-                    *edge_cap = BUTTON_0_MASK;
-                
-                }
-
+                usleep(50000); 
+            }
+            //checa se a placa foi inclinada para baixo e move a peça
+            if(XYZ[1]*mg_per_lsb <= -200){
+                moveDown();
+                drawBoard();
             }
 
-            }else if(jogando == 0){
-
-                initBoard();
-                newShape();
-                                
+            //checa se o botao 0 foi pressionado e caso seja, pausa o jogo
+            if (button_value == 14 && button == 15) {
+                button_value = 15;
+                printf("Pausando...\n");
+                pause2 = 1;
+            }
+            //checa se o botao 1 foi pressionado e caso seja, gira a peça atual
+            if (button_value == 13 && button == 15) {
+                button_value = 15;
+                rotateShape();
                 drawBoard();
+            }
 
-                if (buttons_pressed & BUTTON_1_MASK) {
-                    opt = !opt;
-                    limpaTela();
-                    // Limpa a interrupção
-                    *edge_cap = BUTTON_1_MASK;
-                } 
-
-                if (buttons_pressed & BUTTON_0_MASK && opt == 0) {
-                    printf("Continuando...\n");
-                    menu = 0;
-                    limpaTela();
-                    // Limpa a interrupção
-                    *edge_cap = BUTTON_0_MASK;
-                } else if(buttons_pressed & BUTTON_0_MASK && opt == 1){
-                    printf("saindo...\n");
-                    limpaTela();
-                    // Limpa a interrupção
-                    *edge_cap = BUTTON_0_MASK;
-                    exit(0);
-                }
-
-            }else if(jogando == 2){
-
+            // checagem para queda automatica da peça
+            if (difftime(time(NULL), lastFallTime) >= FALL_DELAY / 500000.0) {
+                moveDown();
                 drawBoard();
-                
-                if(scr > hscr[0]){
-                    hscr[2] = hscr[1];
-                    hscr[1] = hscr[0];
-                    hscr[0] = scr;
-                    scr = 0;
-                }else if(scr > hscr[1]){
-                    hscr[2] = hscr[1];
-                    hscr[1] = scr;
-                    scr = 0;
-                }else if(scr > hscr[2]){
-                    hscr[2] = scr;
-                    scr = 0;
-                }
-                
-                
+                //limpar_tela();
+                lastFallTime = time(NULL);
+            }
 
-                if (buttons_pressed & BUTTON_0_MASK && opt == 0) {
-                    menu = 1;
-                    jogando = 0;
-                    opt = 0;
-                    pause2 = 0;
-                    scr = 0;
-                    printf("saindo...\n");
-                    limpaTela();
-                    // Limpa a interrupção
-                    *edge_cap = BUTTON_0_MASK;
-                }
+            //desenha a matriz na tela do monitor
+            //drawBoard();
+            usleep(50000); 
+
+        //Checa se o jogo foi pausado 
+        } else if(pause2 == 1 && jogando == 1){
+            if (hs_controller == 0){
+                drawBoard();
+                hs_controller = 1;
+            }
             
+
+        //Muda a opção a ser pressionada
+        if (button_value == 13 && button == 15) {
+            button_value = 15;
+            opt = !opt;
+            limpar_tela();
+            hs_controller = 0;
+        } 
+
+        //despausa o jogo
+        if (button_value == 14 && button == 15 && opt == 0) {
+            button_value = 15;
+            printf("Continuando...\n");
+            pause2 = 0;
+            limpar_tela();
+            hs_controller = 0;
+
+        //sai da partida 
+        } else if(button_value == 14 && button == 15 && opt == 1){
+            button_value = 15;
+            menu = 1;
+            jogando = 0;
+            opt = 0;
+            pause2 = 0;
+            scr = 0;
+            printf("saindo...\n");
+            limpar_tela();
+            hs_controller = 0;
+        }
+
+        }
+
+        //Checagem para reiniciar o tabuleiro sempre que o jogador vai do menu inicial para o jogo
+        }else if(jogando == 0){
+
+            initBoard();
+            newShape();
+
+            drawBoard();
+
+        if (button_value == 13 && button == 15) {
+            button_value = 15;
+            opt = !opt;
+            limpar_tela();
+        } 
+
+        //inicia o jogo
+        if (button_value == 14 && button == 15 && opt == 0) {
+            button_value = 15;
+            printf("iniciando...\n");
+            menu = 0;
+            limpar_tela();
+        //sai do jogo 
+        } else if(button_value == 14 && button == 15 && opt == 1){
+            button_value = 15;
+            printf("saindo...\n");
+            limpar_tela();
+            exit(0);
+        }
+
+        //checa se o jogador perdeu (jogando == 2) e caso o score dele seja maior que um dos 3 recordes, salva o score dele
+        }else if(jogando == 2){
+
+            if(scr > hscr[0]){
+                hscr[2] = hscr[1];
+                hscr[1] = hscr[0];
+                hscr[0] = scr;
+                if (hs_controller == 0){
+                    limpar_tela();
+                    drawBoard();
+                    hs_controller = 1;
+                }
+                scr = 0;
+            }else if(scr > hscr[1]){
+                hscr[2] = hscr[1];
+                hscr[1] = scr;
+                if (hs_controller == 0){
+                    limpar_tela();
+                    drawBoard();
+                    hs_controller = 1;
+                }
+                scr = 0;
+            }else if(scr > hscr[2]){
+                hscr[2] = scr;
+                if (hs_controller == 0){
+                    limpar_tela();
+                    drawBoard();
+                    hs_controller = 1;
+                }
+                scr = 0;
             }
+
+            //volta ao menu
+            if (button_value == 14 && button == 15 && opt == 0) {
+                button_value = 15;
+                menu = 1;
+                jogando = 0;
+                hs_controller = 0;
+                opt = 0;
+                pause2 = 0;
+                scr = 0;
+                printf("saindo...\n");
+                limpar_tela();
+            }
+
         }
-        
-        if (munmap(LW_virtual, LW_BRIDGE_SPAN) != 0) {
-            printf("ERROR: munmap() failed...\n");
-            return -1;
-        }
+    }
 
     } else {
         printf("Incorrect device ID\n");
     }
-    
-    return 0;
+ 
+ return 0;
 }
