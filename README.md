@@ -38,8 +38,6 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a
 
 
 
-
-
 <h1 align="center"> Tetris </h1>
 <h3 align="center"> Desenvolvimento do Jogo Tetris para o kit de desenvolvimento DE1-SoC para a disciplina de Sistemas Digitais </h3>
 <h3 align="center"> Equipe: Daniel Lucas Rios da Silva, Filipe Carvalho Matos Galvão, Luan Barbosa dos Santos Costa
@@ -53,22 +51,29 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a
 
 <h2> Sumário </h2>
 
-- [Funcionamento do Jogo](#funcionamento-do-jogo)
 - [Descrição dos Equipamentos e Tópicos Utilizados](#descrição-dos-equipamentos-e-tópicos-utilizados)
-  - [Acelerômetro](#acelerômetro)
-  - [MakeFile](#makefile)
+- [Funcionamento do Jogo](#funcionamento-do-jogo)
+- [Interface e Controles](#interface-e-controles)
+  - [Movimento das Peças - Acelerômetro](#movimento-das-peças---acelerômetro)
+  - [Controle de Rotação e Interações com o Menu - Botões](#controle-de-rotação-e-interações-com-o-menu---botões)
+  - [Exibição Gráfica - Saída VGA](#exibição-gráfica---saída-vga)
+- [MakeFile](#makefile)
 - [Conclusão](#conclusão)
 - [Referências](#referências)
 
-<h2 id="funcionamento-do-jogo">Funcionamento do Jogo</h2>
-    <p>O <strong>Tetris</strong> é um jogo em que o jogador organiza peças de formatos variados que caem de forma contínua na tela. O objetivo é movimentar e rotacionar essas peças para formar linhas horizontais completas, que são removidas, concedendo pontos ao jogador. O jogo termina quando as peças se acumulam e alcançam o topo da área de jogo.</p>
-
 <h2 id="descrição-dos-equipamentos-e-tópicos-utilizados">Descrição dos Equipamentos e Tópicos Utilizados</h2>
+<!-- Adicione a descrição dos equipamentos e tópicos aqui -->
 
-<h3 id="acelerômetro">1. Movimento das Peças - Acelerômetro</h3>
-<p>O <strong>acelerômetro</strong> da DE1-SoC é utilizado para capturar os movimentos das peças no eixo horizontal (esquerda e direita) asssim como no eixo vertical, para acelerar a queda da peça. Ao inclinar a placa levemente para a esquerda, direita, ou para baixo, as peças se movem de forma correspondente dentro da área de jogo. Este método de controle adiciona uma interatividade física ao jogo, tornando a experiência mais dinâmica e intuitiva.</p>
+<h2 id="funcionamento-do-jogo">Funcionamento do Jogo</h2>
+<p>O <strong>Tetris</strong> é um jogo em que o jogador organiza peças de formatos variados que caem de forma contínua na tela. O objetivo é movimentar e rotacionar essas peças para formar linhas horizontais completas, que são removidas, concedendo pontos ao jogador. O jogo termina quando as peças se acumulam e alcançam o topo da área de jogo.</p>
 
-<h3>2. Controle de Rotação e Interações com o Menu - Botões</h3>
+<h2 id="interface-e-controles">Interface e Controles</h2>
+<p>Neste projeto, foram integrados vários periféricos da DE1-SoC para a interação com o jogo, conforme detalhado abaixo:</p>
+
+<h3 id="movimento-das-peças---acelerômetro">1. Movimento das Peças - Acelerômetro</h3>
+<p>O <strong>acelerômetro</strong> da DE1-SoC é utilizado para capturar os movimentos das peças no eixo horizontal (esquerda e direita) assim como no eixo vertical, para acelerar a queda da peça. Ao inclinar a placa levemente para a esquerda, direita, ou para baixo, as peças se movem de forma correspondente dentro da área de jogo. Este método de controle adiciona uma interatividade física ao jogo, tornando a experiência mais dinâmica e intuitiva.</p>
+
+<h3 id="controle-de-rotação-e-interações-com-o-menu---botões">2. Controle de Rotação e Interações com o Menu - Botões</h3>
 <p><strong>Botões</strong> da placa são utilizados para outras funcionalidades, como:</p>
 <ul>
 <li><strong>Rotação das peças</strong>: Pressionar um botão específico permite girar a peça atual, facilitando seu encaixe no tabuleiro.</li>
@@ -76,11 +81,22 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a
 <li><strong>Pausa</strong>: Outro botão é dedicado à função de pausar e retomar o jogo conforme necessário.</li>
 </ul>
 
-<h3 id="makefile">3. MakeFile</h3>
+<h3 id="exibição-gráfica---saída-vga">3. Exibição Gráfica - Saída VGA</h3>
+<p>A interface gráfica do jogo é exibida através da <strong>saída VGA</strong>, permitindo que o jogo seja visualizado em um monitor externo. O monitor utiliza uma resolução de <strong>320x240</strong>, o que oferece uma experiência visual simples e eficiente para o Tetris. A área de jogo é clara e visível, com cores distintas entre as peças que estão caindo, e as que já estão posicionadas, e um layout de fácil compreensão.</p>
+
+<h2>Dinâmica do Jogo</h2>
+<ol>
+<li><strong>Inicialização</strong>: Ao iniciar o jogo, o menu principal será exibido, apresentando o nome "Tetris", as opções de iniciar e sair, assim como as três melhores pontuações.</li>
+<li><strong>Jogabilidade</strong>: Durante o jogo, o jogador controla a posição das peças inclinando a placa, e pode rotacioná-las ou pausar o jogo utilizando os botões.</li>
+<li><strong>Condições de Vitória/Derrota</strong>: O jogo continua indefinidamente enquanto o jogador for capaz de formar linhas completas sem que as peças atinjam o topo da tela. </li>
+<li><strong>Pontuação</strong>: Se a pontuação do usuário for superior a alguma das três melhores, ela fica armazenada no ranking enquanto jogo estiver em execução. </li>
+</ol>
+
+<h2 id="makefile">MakeFile</h2>
 <p>O <strong>MakeFile</strong> é usado para gerenciar a compilação do código do jogo e facilitar o processo de geração do executável para a placa DE1-SoC. Esse arquivo contém comandos que automatizam a construção do projeto, configurando e compilando o código-fonte, e gerando o binário final a ser carregado na placa.</p>
 
-<h2>Conclusão</h2>
+<h2 id="conclusão">Conclusão</h2>
 <p>Este projeto demonstrou a integração de hardware e software para criar uma versão do jogo Tetris com uma experiência física de controle, aproveitando o acelerômetro e botões do kit DE1-SoC. O projeto enfatiza a viabilidade de construir uma aplicação interativa com recursos de programação embarcada e controles alternativos.</p>
 
-<h2>Referências</h2>
+<h2 id="referências">Referências</h2>
 <p>Liste aqui todas as referências utilizadas no desenvolvimento do projeto, como manuais da placa DE1-SoC, documentação do acelerômetro, referências de implementação de jogos em C, entre outros.</p>
