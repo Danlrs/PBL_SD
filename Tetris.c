@@ -6,12 +6,12 @@
 #include <sys/mman.h>
 #include <stdint.h>
 
-//Tamanho do tabuleiro do jogo
+// Tamanho do tabuleiro do jogo
 #define BOARD_WIDTH 10
 #define BOARD_HEIGHT 20
 #define FALL_DELAY 500000 // 1 segundo
 
-//Endereços usados para mapeamento e funcionalidades do acelerometro
+// Endereços usados para mapeamento e funcionalidades do acelerometro
 typedef int bool;
 #define true 1
 #define false 0
@@ -55,12 +55,12 @@ extern void draw_text(int posicao, int cor);
 extern void limpar_tela();
 extern int button_pressed();
 
-//Tabuleiro do jogo
+// Tabuleiro do jogo
 int board[BOARD_HEIGHT][BOARD_WIDTH];
 
-//a variavel shapes armazena todos os blocos possiveis de jogo e suas variacoes, vertical, horizontal, invertido verticalmente e invertido horizontalmente
+// A variavel shapes armazena todos os blocos possiveis de jogo e suas variacoes, vertical, horizontal, invertido verticalmente e invertido horizontalmente
 int shapes[7][4][4][4] = {
- // I
+    // I
     {
     { {0,0,0,0}, {1,1,1,1}, {0,0,0,0}, {0,0,0,0} },
     { {0,1,0,0}, {0,1,0,0}, {0,1,0,0}, {0,1,0,0} },
@@ -111,7 +111,7 @@ int shapes[7][4][4][4] = {
     }
 };
 
-//variaveis que representam os registradores do acelerometro
+// Variaveis que representam os registradores do acelerometro
 void * I2C0_virtual;
 void * sysmgr_virtual;
 volatile int * ic_con;
@@ -124,7 +124,7 @@ volatile int * ic_data_cmd;
 volatile int * ic_rxflr;
 unsigned int * sysmgr_virtual_ptr;
 
-//variaveis de controle e variaveis de execucao do jogo
+// Variaveis de controle e variaveis de execucao do jogo
 int currentShape;
 int currentRotation;
 int currentX;
@@ -186,7 +186,7 @@ bool ADXL345_WasActivityUpdated(){
     return bReady;
 }
 
-//inicia o acelerometro
+// Inicia o acelerometro
 void ADXL345_Init(){
 
     ADXL345_REG_WRITE(ADXL345_REG_DATA_FORMAT, XL345_RANGE_16G | XL345_FULL_RESOLUTION);
@@ -216,7 +216,7 @@ void ADXL345_REG_MULTI_READ(uint8_t address, uint8_t values[], uint8_t len){
     for (i=0;i<len;i++)
     *ic_data_cmd = 0x100;
 
-    // FAz a leitura dos bytes
+    // Faz a leitura dos bytes
     int nth_byte=0;
     while (len){
         if ((*ic_rxflr) > 0){
@@ -227,7 +227,7 @@ void ADXL345_REG_MULTI_READ(uint8_t address, uint8_t values[], uint8_t len){
     }
 }
 
-//le as coordenadas dos eixos do acelerometro
+// Le as coordenadas dos eixos do acelerometro
 void ADXL345_XYZ_Read(int16_t szData16[3]){
     uint8_t szData8[6];
     ADXL345_REG_MULTI_READ(0x32, (uint8_t *)&szData8, sizeof(szData8));
@@ -237,7 +237,7 @@ void ADXL345_XYZ_Read(int16_t szData16[3]){
     szData16[2] = (szData8[5] << 8) | szData8[4];
 }
 
-//faz a configuracao inicial do IC20
+// Faz a configuracao inicial do IC20
 void initConfigIC20(){
     ic_con = (int *) (I2C0_virtual + 0x0);
     ic_tar = (int *) (I2C0_virtual + 0x4);
@@ -272,7 +272,7 @@ bool ADXL345_IsDataReady(){
     return bReady;
 }
 
-//calibra os valores do acelerometro
+// Calibra os valores do acelerometro
 void ADXL345_Calibrate(){
 
     int average_x = 0;
@@ -283,10 +283,10 @@ void ADXL345_Calibrate(){
     int8_t offset_y;
     int8_t offset_z;
 
-    /// Para a medida
+    // Para a medida
     ADXL345_REG_WRITE(ADXL345_REG_POWER_CTL, XL345_STANDBY);
 
-    //pega os offsets atuais
+    // Pega os offsets atuais
     ADXL345_REG_READ(ADXL345_REG_OFSX, (uint8_t *)&offset_x);
     ADXL345_REG_READ(ADXL345_REG_OFSY, (uint8_t *)&offset_y);
     ADXL345_REG_READ(ADXL345_REG_OFSZ, (uint8_t *)&offset_z);
@@ -345,7 +345,7 @@ void ADXL345_Calibrate(){
 }
 
 
-//Cria o tabuleiro do jogo
+// Cria o tabuleiro do jogo
 void initBoard() {
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         for (int j = 0; j < BOARD_WIDTH; j++) {
@@ -424,12 +424,12 @@ int* ler_pontos(int pontos, int* tamanho_array) {
 }
 
 
-//Funcao que recebe posicao e o numero especificado e o desenha
+// Funcao que recebe posicao e o numero especificado e o desenha
 void desenhar_number(int posicao, int numero){
     switch (numero){
 
         case 0:
-            //Desenha o 0 (ajustar posição)
+            // Desenha o 0 (ajustar posição)
             draw_text(posicao + 1, 0b111111111);
             draw_vertical_text(posicao + 80, 0b111111111, 3);
             draw_vertical_text(posicao + 82, 0b111111111, 3);
@@ -438,14 +438,14 @@ void desenhar_number(int posicao, int numero){
 
         case 1:
 
-            //Desenha o 1 (ajustar posição)
+            // Desenha o 1 (ajustar posição)
             draw_vertical_text(posicao + 1, 0b111111111, 5);
             draw_text(posicao + 80  , 0b111111111);
             break;
 
         case 2:
 
-            //Desenha o 2 (ajustar posição)
+            // Desenha o 2 (ajustar posição)
             draw_text(posicao + 80, 0b111111111);
             draw_text(posicao + 1, 0b111111111);
             draw_text(posicao + 82, 0b111111111);
@@ -456,7 +456,7 @@ void desenhar_number(int posicao, int numero){
 
         case 3:
 
-            //Deseha o 3 (ajustar posição)
+            // Deseha o 3 (ajustar posição)
             draw_text(posicao, 0b111111111);
             draw_text(posicao + 1, 0b111111111);
             draw_text(posicao + 82, 0b111111111);
@@ -468,14 +468,14 @@ void desenhar_number(int posicao, int numero){
 
         case 4:
 
-            //Desenha o 4 (ajustar posição)
+            // Desenha o 4 (ajustar posição)
             draw_vertical_text(posicao, 0b111111111, 3);
             draw_text(posicao + 161, 0b111111111);
             draw_vertical_text(posicao + 2, 0b111111111, 5);
             break;
 
         case 5:
-            //Desenha o 5 (ajustar posição)
+            // Desenha o 5 (ajustar posição)
             draw_horizontal_text(posicao, 0b111111111, 3);
             draw_horizontal_text(posicao + 80, 0b111111111, 1);
             draw_horizontal_text(posicao + 160, 0b111111111, 3);
@@ -484,7 +484,7 @@ void desenhar_number(int posicao, int numero){
             break;
 
         case 6:
-            //Desenha o 6 (ajustar posição)
+            // Desenha o 6 (ajustar posição)
             draw_horizontal_text(posicao, 0b111111111, 2);
             draw_vertical_text(posicao - 1, 0b111111111, 5);
             draw_horizontal_text(posicao + 320, 0b111111111, 2);
@@ -494,14 +494,14 @@ void desenhar_number(int posicao, int numero){
 
         case 7:
 
-            //Desenha o 7 inclinado 
+            // Desenha o 7 inclinado 
             draw_horizontal_text(posicao, 0b111111111, 3);
             draw_vertical_text(posicao + 82, 0b111111111, 4);
             break;
 
         case 8:
 
-            //Desenha o 8
+            // Desenha o 8
             draw_horizontal_text(posicao, 0b111111111, 3);
             draw_vertical_text(posicao + 80, 0b111111111, 3);
             draw_text(posicao + 161, 0b111111111);
@@ -511,7 +511,7 @@ void desenhar_number(int posicao, int numero){
         
         case 9:
 
-            //Desenha o 9
+            // Desenha o 9
             draw_horizontal_text(posicao, 0b111111111, 3);
             draw_text(posicao + 80, 0b111111111);
             draw_horizontal_text(posicao + 160, 0b111111111, 2);
@@ -563,7 +563,7 @@ void draw_menu() {
 // Função principal que exibe na tela as paginas do jogo
 void drawBoard(){
 
-    //a variavel menu faz o controle para checar se o usuario esta no menu do jogo ou se esta jogando
+    // A variavel menu faz o controle para checar se o usuario esta no menu do jogo ou se esta jogando
     if( menu == 1 ){
         draw_menu();
 
@@ -704,8 +704,8 @@ void drawBoard(){
         draw_horizontal(3948, 0b111111111, 12);
         draw_vertical(770, 0b111111111, 20);
        
-        //Desenha os 3 HighScores
-        //desenhar a letra H
+        // Desenha os 3 HighScores
+        // Desenhar a letra H
         draw_vertical_text(728, 0b111111111, 5);
         draw_text(889, 0b111111111);
         draw_vertical_text(730, 0b111111111, 5);
@@ -723,10 +723,10 @@ void drawBoard(){
         draw_vertical_text(1283, 0b111111111, 5);
         draw_text(1362  , 0b111111111);
 
-        //hifen
+        // Hifen
         draw_horizontal_text(1446, 0b111111111, 2);
 
-        //Desenha o highscore 1
+        // Desenha o highscore 1
         int pos_hscr1 = 1290;
         for (int i = 0; i < tamanho_array_hscr1; i++) {
             desenhar_number(pos_hscr1, digitos_hscr1[i]);
@@ -736,7 +736,7 @@ void drawBoard(){
         // Liberar a memória alocada para o array
         free(digitos_hscr1);
 
-        //Desenha o 2
+        // Desenha o 2
         draw_text(1842, 0b111111111);
         draw_text(1763, 0b111111111);
         draw_text(1844, 0b111111111);
@@ -744,11 +744,11 @@ void drawBoard(){
         draw_text(2002, 0b111111111);
         draw_horizontal_text(2082, 0b111111111, 3);
         
-        //hifen
+        // Hifen
         draw_horizontal_text(1926, 0b111111111, 2);
 
 
-        //Desenha o highscore 2
+        // Desenha o highscore 2
         int pos_hscr2 = 1770;
         for (int i = 0; i < tamanho_array_hscr2; i++) {
             desenhar_number(pos_hscr2, digitos_hscr2[i]);
@@ -759,7 +759,7 @@ void drawBoard(){
         free(digitos_hscr2);
 
 
-        //Deseha o 3
+        // Deseha o 3
         draw_text(2242, 0b111111111);
         draw_text(2243, 0b111111111);
         draw_text(2324, 0b111111111);
@@ -768,10 +768,10 @@ void drawBoard(){
         draw_text(2563, 0b111111111);
         draw_text(2484, 0b111111111);
 
-        //hifen
+        // Hifen
         draw_horizontal_text(2406, 0b111111111, 2);
 
-        //Desenha o highscore 3
+        // Desenha o highscore 3
         int pos_hscr3 = 2250;
         for (int i = 0; i < tamanho_array_hscr3; i++) {
             desenhar_number(pos_hscr3, digitos_hscr3[i]);
@@ -781,24 +781,24 @@ void drawBoard(){
         // Liberar a memória alocada para o array
         free(digitos_hscr3);
 
-        //Desenha o P
+        // Desenha o P
         draw_vertical_text(775, 0b111111111, 5);
         draw_text(776, 0b111111111);
         draw_text(857, 0b111111111);
         draw_text(936, 0b111111111);
 
-        //Desenha o T
+        // Desenha o T
         draw_horizontal_text(779, 0b111111111, 3);
         draw_vertical_text(860, 0b111111111, 4);
 
-        //Desenha o S
+        // Desenha o S
         draw_horizontal_text(784, 0b111111111, 2);
         draw_text(863, 0b111111111);
         draw_horizontal_text(943, 0b111111111, 3);
         draw_text(1025, 0b111111111);
         draw_horizontal_text(1103, 0b111111111, 2);
 
-        //Desenha a quantidade atual de pontos
+        // Desenha a quantidade atual de pontos
 
         int tamanho_array_pts;
         int* digitos_scr = ler_pontos(scr, &tamanho_array_pts);  // Lê os pontos e define o tamanho do array
@@ -813,7 +813,7 @@ void drawBoard(){
         free(digitos_scr);
 
         
-        //loop for que desenha a matriz do jogo (peças ja caidas e espaços vazios)
+        // Loop for que desenha a matriz do jogo (peças ja caidas e espaços vazios)
         for (int i = 0; i < BOARD_HEIGHT; i++) {
             for (int j = 0; j < BOARD_WIDTH; j++) {
                 if (board[i][j] == 1) {
@@ -838,7 +838,7 @@ void drawBoard(){
         if(pause2 == 1){
             // If que checa a opção a ser inserida no menu de pausa e muda o indicador (>)
             if(opt == 0){
-                //Desenhando a tela preta para tampar o jogo
+                // Desenhando a tela preta para tampar o jogo
                 draw_vertical(750, 0b000000000, 20);
                 draw_vertical(752, 0b000000000, 20);
                 draw_vertical(754, 0b000000000, 20);
@@ -870,7 +870,7 @@ void drawBoard(){
                 draw_text(2444, 0b111111111);
 
             } else if(opt == 1){
-                //Desenhando a tela preta para tampar o jogo
+                // Desenhando a tela preta para tampar o jogo
                 draw_vertical(750, 0b000000000, 20);
                 draw_vertical(752, 0b000000000, 20);
                 draw_vertical(754, 0b000000000, 20);
@@ -903,7 +903,7 @@ void drawBoard(){
             }
         }
 
-        //Jogando = 2 significa que o jogador perdeu
+        // Jogando = 2 significa que o jogador perdeu
         if(jogando == 2){
             // Escrever Game Over
             // Desenha a letra G
@@ -965,7 +965,7 @@ void drawBoard(){
     }
 }
 
-//Função que remove a linha caso totalmente preenchida e move as que estão acima dela uma unidade abaixo, ao final soma 100 ao score do jogdor
+// Função que remove a linha caso totalmente preenchida e move as que estão acima dela uma unidade abaixo, ao final soma 100 ao score do jogdor
 void removeLine(int y) {
     for (int j = 0; j < BOARD_WIDTH; j++) {
         board[y][j] = 0;
@@ -982,7 +982,7 @@ void removeLine(int y) {
     limpar_tela();
 }
 
-//Checa se existem linhas preenchidas na matriz e as remove
+// Checa se existem linhas preenchidas na matriz e as remove
 void checkLines() {
     for (int i = 0; i < BOARD_HEIGHT; i++) {
         int fullLine = 1;
@@ -998,7 +998,7 @@ void checkLines() {
     }
 }
 
-//Função que "Encaixa" a peça na matriz do jogo, alterando o valor anterior de 0 (vazio) para 1 (bloco)
+// Função que "Encaixa" a peça na matriz do jogo, alterando o valor anterior de 0 (vazio) para 1 (bloco)
 void placeShape() {
 
     for (int i = 0; i < 4; i++) {
@@ -1011,7 +1011,7 @@ void placeShape() {
     checkLines();
 }
 
-//Checa se houve colisao da peça atual com a matriz do jogo
+// Checa se houve colisao da peça atual com a matriz do jogo
 int checkCollision(int x, int y, int rotation) {
 
     for (int i = 0; i < 4; i++) {
@@ -1029,7 +1029,7 @@ int checkCollision(int x, int y, int rotation) {
     return 0;
 }
 
-//Gera uma nova peça
+// Gera uma nova peça
 void newShape() {
     currentShape = rand() % 7;
     currentRotation = 0;
@@ -1037,12 +1037,12 @@ void newShape() {
     currentY = 0;
     if (checkCollision(currentX, currentY, currentRotation)) {
         printf("Game Over!\n");
-        //jogando = 2 simboliza game over
+        // Jogando = 2 simboliza game over
         jogando = 2;
     }
 }
 
-//Função que faz o movimento para baixo da peça
+// Função que faz o movimento para baixo da peça
 void moveDown() {
     if (!checkCollision(currentX, currentY + 1, currentRotation)) {
         currentY++;
@@ -1052,7 +1052,7 @@ void moveDown() {
     }
 }
 
-//Função para rotacionar a peça
+// Função para rotacionar a peça
 void rotateShape() {
     int newRotation = (currentRotation + 1) % 4;
     if (!checkCollision(currentX, currentY, newRotation)) {
@@ -1060,14 +1060,14 @@ void rotateShape() {
     }
 }
 
-//Função para movar a peça para a esquerda
+// Função para movar a peça para a esquerda
 void moveLeft() {
     if (!checkCollision(currentX - 1, currentY, currentRotation)) {
         currentX--;
     }
 }
 
-//Função para movar a peça para a direita
+// Função para movar a peça para a direita
 void moveRight() {
     if (!checkCollision(currentX + 1, currentY, currentRotation)) {
         currentX++;
@@ -1075,7 +1075,7 @@ void moveRight() {
 }
 
 int main() {
-    //mapeia a memoria do I2CO e o sysmgr
+    // Mapeia a memoria do I2CO e o sysmgr
     I2C0_virtual = map_physical_memory(I2C0_BASE, I2C0_SPAN);
     sysmgr_virtual = map_physical_memory(SYSMGR_BASE, SYSMGR_SPAN);
 
@@ -1087,7 +1087,7 @@ int main() {
 
     ADXL345_REG_READ(0x00, &devid);
 
-    //checa o endereco do device (acelerometro)
+    // Checa o endereco do device (acelerometro)
     if (devid == 0xE5){
         ADXL345_Init();
         srand(time(NULL));
@@ -1106,56 +1106,56 @@ int main() {
                 button_value = button;
             }
 
-            //if checa se o jogador esta no jogo (menu == 0) e se não perdeu (jogando != 2)
+            // If checa se o jogador esta no jogo (menu == 0) e se não perdeu (jogando != 2)
             if(menu == 0 && jogando != 2){
                 jogando = 1;
-            //if checa se o jogo não esta pausado (pause2 == 0) e se esta em jogo (jogando == 1)
+            // If checa se o jogo não esta pausado (pause2 == 0) e se esta em jogo (jogando == 1)
             if(pause2 == 0 && jogando == 1){
 
                 ADXL345_XYZ_Read(XYZ);
-                //checa se a placa foi inclinada a direita e move a peça
+                // Checa se a placa foi inclinada a direita e move a peça
                 if(XYZ[0]*mg_per_lsb >= 150){
                     moveRight();
                     drawBoard();
                     usleep(50000); 
-                //checa se a placa foi inclinada a esquerda e move a peça
+                // Checa se a placa foi inclinada a esquerda e move a peça
                 }else if(XYZ[0]*mg_per_lsb <= -150){
                     moveLeft();
                     drawBoard();
                     usleep(50000); 
                 }
-                //checa se a placa foi inclinada para baixo e move a peça
+                // Checa se a placa foi inclinada para baixo e move a peça
                 if(XYZ[1]*mg_per_lsb <= -200){
                     moveDown();
                     drawBoard();
                 }
 
-                //checa se o botao 0 foi pressionado e caso seja, pausa o jogo
+                // Checa se o botao 0 foi pressionado e caso seja, pausa o jogo
                 if (button_value == 14 && button == 15) {
                     button_value = 15;
                     printf("Pausando...\n");
                     pause2 = 1;
                 }
-                //checa se o botao 1 foi pressionado e caso seja, gira a peça atual
+                // Checa se o botao 1 foi pressionado e caso seja, gira a peça atual
                 if (button_value == 13 && button == 15) {
                     button_value = 15;
                     rotateShape();
                     drawBoard();
                 }
 
-                // checagem para queda automatica da peça
+                // Checagem para queda automatica da peça
                 if (difftime(time(NULL), lastFallTime) >= FALL_DELAY / 500000.0) {
                     moveDown();
                     drawBoard();
-                    //limpar_tela();
+                    // Limpar_tela();
                     lastFallTime = time(NULL);
                 }
 
-                //desenha a matriz na tela do monitor
-                //drawBoard();
+                // Desenha a matriz na tela do monitor
+                // drawBoard();
                 usleep(50000); 
 
-            //Checa se o jogo foi pausado 
+            // Checa se o jogo foi pausado 
             } else if(pause2 == 1 && jogando == 1){
                 if (hs_controller == 0){
                     drawBoard();
@@ -1163,7 +1163,7 @@ int main() {
                 }
                 
 
-            //Muda a opção a ser pressionada
+            // Muda a opção a ser pressionada
             if (button_value == 13 && button == 15) {
                 button_value = 15;
                 opt = !opt;
@@ -1171,7 +1171,7 @@ int main() {
                 hs_controller = 0;
             } 
 
-            //despausa o jogo
+            // Despausa o jogo
             if (button_value == 14 && button == 15 && opt == 0) {
                 button_value = 15;
                 printf("Continuando...\n");
@@ -1179,7 +1179,7 @@ int main() {
                 limpar_tela();
                 hs_controller = 0;
 
-            //sai da partida 
+            // Sai da partida 
             } else if(button_value == 14 && button == 15 && opt == 1){
                 button_value = 15;
                 menu = 1;
@@ -1194,7 +1194,7 @@ int main() {
 
             }
 
-            //Checagem para reiniciar o tabuleiro sempre que o jogador vai do menu inicial para o jogo
+            // Checagem para reiniciar o tabuleiro sempre que o jogador vai do menu inicial para o jogo
             }else if(jogando == 0){
 
                 initBoard();
@@ -1208,13 +1208,13 @@ int main() {
                 limpar_tela();
             } 
 
-            //inicia o jogo
+            // Inicia o jogo
             if (button_value == 14 && button == 15 && opt == 0) {
                 button_value = 15;
                 printf("iniciando...\n");
                 menu = 0;
                 limpar_tela();
-            //sai do jogo 
+            // Sai do jogo 
             } else if(button_value == 14 && button == 15 && opt == 1){
                 button_value = 15;
                 printf("saindo...\n");
@@ -1222,7 +1222,7 @@ int main() {
                 exit(0);
             }
 
-            //checa se o jogador perdeu (jogando == 2) e caso o score dele seja maior que um dos 3 recordes, salva o score dele
+            // Checa se o jogador perdeu (jogando == 2) e caso o score dele seja maior que um dos 3 recordes, salva o score dele
             }else if(jogando == 2){
 
                 if(scr > hscr[0]){
@@ -1254,7 +1254,7 @@ int main() {
                     scr = 0;
                 }
 
-                //volta ao menu
+                // Volta ao menu
                 if (button_value == 14 && button == 15 && opt == 0) {
                     button_value = 15;
                     menu = 1;
