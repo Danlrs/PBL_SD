@@ -34,6 +34,10 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a
   <li><strong>Saída VGA:</strong> Permite a exibição gráfica do jogo em um monitor.</li>
 </ul>
 
+<h3>Unidade de Processamento Gráfico Baseada em FPGA</h3>
+<p>O projeto utiliza uma unidade de processamento gráfico (GPU) desenvolvida para plataformas FPGA, especificamente projetada para jogos 2D. Esta GPU permite controlar sprites e renderizar gráficos em tempo real, utilizando uma arquitetura baseada em sprites com suporte ao padrão VGA. A estrutura da GPU inclui módulos dedicados para sincronização de vídeo, gerenciamento de sprites e renderização de polígonos, o que possibilita uma exibição gráfica eficiente e detalhada em resolução 640x480. Com essa unidade gráfica, é possível controlar a movimentação e a atualização dos elementos do jogo diretamente no hardware, otimizando o desempenho e a interatividade. Para o Tetris, aproveitamos o recurso de background desta GPU, que permite desenhar elementos de cenário de maneira otimizada, possibilitando a atualização eficiente dos blocos e da interface do jogo.</p>
+
+
 <h3>Linguagem C</h3>
 <p>A linguagem C foi escolhida por sua eficiência e pelo controle direto que oferece sobre os recursos de hardware, o que é fundamental para o desenvolvimento de sistemas embarcados e jogos com interação direta com o hardware. Além disso, o C é amplamente suportado em plataformas de FPGA e permite o uso de bibliotecas específicas para controle dos periféricos.</p>
 
