@@ -364,28 +364,28 @@ void initBoard() {
 }
     
 
-// Desenhar uma linha vertical
+// Desenha uma linha vertical
 void draw_vertical(int pos, int color, int tamanho) {
     for (int i = 0; i < tamanho; i++){
         draw_box(pos + i*160, color);
     }
 }
 
-// Desenhar uma linha horizontal
+// Desenha uma linha horizontal
 void draw_horizontal(int pos, int color, int tamanho) {
     for (int i = 0; i < tamanho; i++){
         draw_box(pos + i*2, color);
     }
 }
 
-// Desenhar uma linha fina vertical
+// Desenha uma linha fina vertical
 void draw_vertical_text(int pos, int color, int tamanho) {
     for (int i = 0; i < tamanho; i++){
         draw_text(pos + i*80, color);
     }
 }
 
-// Desenhar uma linha fina horizontal
+// Desenha uma linha fina horizontal
 void draw_horizontal_text(int pos, int color, int tamanho) {
     for (int i = 0; i < tamanho; i++){
         draw_text(pos + i, color);
@@ -432,8 +432,8 @@ int* ler_pontos(int pontos, int* tamanho_array) {
 }
 
 
-// Funcao que recebe posicao e o numero especificado e o desenha
-void desenhar_number(int posicao, int numero){
+// Função que recebe posicao e o numero especificado e o Desenha
+void Desenha_number(int posicao, int numero){
     switch (numero){
 
         case 0:
@@ -531,23 +531,23 @@ void desenhar_number(int posicao, int numero){
     }
 
 }
-// Função que desenha todas as letras de "Tetris" com sombra e cores diferentes
+// Função que Desenha todas as letras de "Tetris" com sombra e cores diferentes
 void draw_menu() {
-    // Desenhar a letra T
+    // Desenha a letra T
     draw_horizontal(565, 0b110110110, 5);
     draw_vertical(729, 0b110110110, 4);
 
-    // Desenhar a letra E (Verde)
+    // Desenha a letra E (Verde)
     draw_vertical(577, 0b001101010, 5);
     draw_horizontal(579, 0b001101010, 4);
     draw_horizontal(899, 0b001101010, 3);
     draw_horizontal(1219, 0b001101010, 4);
 
-    // Desenhar a letra T (segunda vez - Azul)
+    // Desenha a letra T (segunda vez - Azul)
     draw_horizontal(589, 0b101011001, 5);
     draw_vertical(753, 0b101011001, 4);
 
-    // Desenhar a letra R (Amarelo)
+    // Desenha a letra R (Amarelo)
     draw_vertical(601, 0b001110111, 5);
     draw_horizontal(603, 0b001110111, 2);
     draw_box(767, 0b001110111);
@@ -610,7 +610,7 @@ void drawBoard(){
             draw_text(2525, 0b010111000);
             draw_vertical_text(2606, 0b010111000, 2);
 
-            // Desenhar a palavra Sair
+            // Desenha a palavra Sair
             // Desenha a letra S
             draw_horizontal_text(2909, 0b111111111, 2);
             draw_text(2988, 0b111111111);
@@ -670,7 +670,7 @@ void drawBoard(){
             draw_text(2525, 0b111111111);
             draw_vertical_text(2606, 0b111111111, 2);
 
-            // Desenhar a palavra Sair
+            // Desenha a palavra Sair
             // Desenha a letra S
             draw_horizontal_text(2909, 0b010111000, 2);
             draw_text(2988, 0b010111000);
@@ -714,7 +714,7 @@ void drawBoard(){
         int tamanho_array_hscr3;
         int* digitos_hscr3 = ler_pontos(hscr[2], &tamanho_array_hscr3);  // Lê os pontos e define o tamanho do array
 
-        // Desenhar a letra H
+        // Desenha a letra H
         draw_vertical_text(728, 0b111111111, 5);
         draw_text(889, 0b111111111);
         draw_vertical_text(730, 0b111111111, 5);
@@ -732,13 +732,13 @@ void drawBoard(){
         draw_vertical_text(1283, 0b111111111, 5);
         draw_text(1362  , 0b111111111);
 
-        // Hifen
+        // Hífen
         draw_horizontal_text(1446, 0b111111111, 2);
 
         // Desenha o highscore 1
         int pos_hscr1 = 1290;
         for (int i = 0; i < tamanho_array_hscr1; i++) {
-            desenhar_number(pos_hscr1, digitos_hscr1[i]);
+            Desenha_number(pos_hscr1, digitos_hscr1[i]);
             pos_hscr1 += 4;
         }
 
@@ -753,14 +753,14 @@ void drawBoard(){
         draw_text(2002, 0b111111111);
         draw_horizontal_text(2082, 0b111111111, 3);
         
-        // Hifen
+        // Hífen
         draw_horizontal_text(1926, 0b111111111, 2);
 
 
         // Desenha o highscore 2
         int pos_hscr2 = 1770;
         for (int i = 0; i < tamanho_array_hscr2; i++) {
-            desenhar_number(pos_hscr2, digitos_hscr2[i]);
+            Desenha_number(pos_hscr2, digitos_hscr2[i]);
             pos_hscr2 += 4;
         }
 
@@ -777,13 +777,13 @@ void drawBoard(){
         draw_text(2563, 0b111111111);
         draw_text(2484, 0b111111111);
 
-        // Hifen
+        // Hífen
         draw_horizontal_text(2406, 0b111111111, 2);
 
         // Desenha o highscore 3
         int pos_hscr3 = 2250;
         for (int i = 0; i < tamanho_array_hscr3; i++) {
-            desenhar_number(pos_hscr3, digitos_hscr3[i]);
+            Desenha_number(pos_hscr3, digitos_hscr3[i]);
             pos_hscr3 += 4;
         }
 
@@ -814,7 +814,7 @@ void drawBoard(){
 
         int pos_pts = 1336;
         for (int i = 0; i < tamanho_array_pts; i++) {
-            desenhar_number(pos_pts, digitos_scr[i]);
+            Desenha_number(pos_pts, digitos_scr[i]);
             pos_pts += 4;
         }
 
@@ -822,7 +822,7 @@ void drawBoard(){
         free(digitos_scr);
 
         
-        // Loop for que desenha a matriz do jogo (peças ja caidas e espaços vazios)
+        // Loop for que Desenha a matriz do jogo (peças ja caidas e espaços vazios)
         for (int i = 0; i < BOARD_HEIGHT; i++) {
             for (int j = 0; j < BOARD_WIDTH; j++) {
                 if (board[i][j] == 1) {
@@ -961,7 +961,7 @@ void drawBoard(){
             draw_vertical_text(3005, 0b000000111, 1);
             draw_vertical_text(3086, 0b000000111, 2);
 
-            // Desenhar botão de voltar
+            // Desenha botão de voltar
             draw_horizontal_text(4310, 0b000000111, 3);
             draw_vertical_text(4393, 0b000000111, 2);
             draw_horizontal_text(4546, 0b000000111, 7);
