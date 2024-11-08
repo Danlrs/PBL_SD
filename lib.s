@@ -1,9 +1,9 @@
 .section .data
-MEM_FD:          .asciz "/dev/mem"      @ Caminho para o arquivo /dev/mem
-FPGA_BRIDGE:     .word 0xff200 @ endereco da ponte
-HW_REGS_SPAN:          .word 0x100       @ tamanho da pagina do mapeamento (256 kb)
-dataA: .word 0x80
-dataB: .word 0x70
+MEM_FD:          .asciz "/dev/mem"                @ Caminho para o arquivo /dev/mem
+FPGA_BRIDGE:     .word 0xff200                    @ endereco da ponte
+HW_REGS_SPAN:          .word 0x100                @ tamanho da pagina do mapeamento (256 kb)
+dataA: .word 0x80                                 @Barramento do DATA_A
+dataB: .word 0x70                                 @Barramento do DATA_B
 ADRESS_MAPPED:  .space   4
 ADRESS_FD:      .space   4
 
