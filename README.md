@@ -46,12 +46,12 @@ Docente: Ângelo Amâncio Duarte </h3>
 
 <div align="justify"> 
 <h2> Resumo </h2>
-O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a linguagem de programação C, e a placa FPGA DE1-SoC para interação com o usuário, sendo que é utilizado o acelerômetro da placa para obter os movimentos desejados pelo usuário para as peças, assim como os botões da placa para permitir que o jogador interaja com o menu, pause o jogo, e gire as peças. Além disso, é utilizada sua saída VGA para apresentar a interface gráfica do jogo no monitor com a resolução de 320x240.
+O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a linguagem de programação C, e a placa FPGA DE1-SoC para interação com o usuário, sendo que é utilizado o acelerômetro da placa para obter os movimentos desejados pelo usuário para as peças, assim como os botões da placa para permitir que o jogador interaja com o menu, pause o jogo, e gire as peças. Além disso, é utilizada sua saída VGA para apresentar a interface gráfica do jogo no monitor com a resolução de 640x480.
 </div>
 
 <h2> Sumário </h2>
 
-- [Descrição dos Equipamentos e Tópicos Utilizados](#descrição-dos-equipamentos-e-tópicos-utilizados)
+- [Descrição dos Equipamentos e softwares Utilizados](#descrição-dos-equipamentos-e-softwares-utilizados)
 - [Funcionamento do Jogo](#funcionamento-do-jogo)
 - [Interface e Controles](#interface-e-controles)
   - [Movimento das Peças - Acelerômetro](#movimento-das-peças---acelerômetro)
@@ -61,7 +61,7 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a
 - [Conclusão](#conclusão)
 - [Referências](#referências)
 
-<h2 id="descrição-dos-equipamentos-e-tópicos-utilizados">Descrição dos Equipamentos e Tópicos Utilizados</h2>
+<h2 id="descrição-dos-equipamentos-e-softwares-utilizados">Descrição dos Equipamentos e Softwares Utilizados</h2>
 <!-- Adicione a descrição dos equipamentos e tópicos aqui -->
 
 <h2 id="funcionamento-do-jogo">Funcionamento do Jogo</h2>
@@ -82,7 +82,7 @@ O projeto em questão visa desenvolver um jogo semelhante ao tetris utilizando a
 </ul>
 
 <h3 id="exibição-gráfica---saída-vga">3. Exibição Gráfica - Saída VGA</h3>
-<p>A interface gráfica do jogo é exibida através da <strong>saída VGA</strong>, permitindo que o jogo seja visualizado em um monitor externo. O monitor utiliza uma resolução de <strong>320x240</strong>, o que oferece uma experiência visual simples e eficiente para o Tetris. A área de jogo é clara e visível, com cores distintas entre as peças que estão caindo, e as que já estão posicionadas, e um layout de fácil compreensão.</p>
+<p>A interface gráfica do jogo é exibida através da <strong>saída VGA</strong>, permitindo que o jogo seja visualizado em um monitor externo. O monitor utiliza uma resolução de <strong>640x480</strong>, o que oferece uma experiência visual simples e eficiente para o Tetris. A área de jogo é clara e visível, com cores distintas entre as peças que estão caindo, e as que já estão posicionadas, e um layout de fácil compreensão.</p>
 
 <h2>Dinâmica do Jogo</h2>
 <ol>
